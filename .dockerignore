@@ -1,0 +1,29 @@
+# Exclude frontend completely
+frontend/
+
+# Exclude virtual environments
+venv/
+env/
+
+# Node stuff
+node_modules/
+
+# Local SQLite DB (optional: keep only if needed)
+db.sqlite3
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Git
+.git/
+.gitignore
+
+# Docker files
+Dockerfile.frontend
+Dockerfile.nginx
+
+# Others
+*.log
+media/
+

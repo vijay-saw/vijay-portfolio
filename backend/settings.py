@@ -39,8 +39,9 @@ INSTALLED_APPS = [
 # -----------------------------------------------------------
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',   # <--- MUST BE FIRST
-    'django.middleware.security.SecurityMiddleware',
+    'django.middleware.security.SecurityMiddleware',   # MUST BE FIRST
+    'whitenoise.middleware.WhiteNoiseMiddleware',      # MUST COME RIGHT AFTER SECURITY
+    'corsheaders.middleware.CorsMiddleware',           # SHOULD COME AFTER WHITENOISE
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -54,12 +55,16 @@ MIDDLEWARE = [
 # CORS SETTINGS
 # -----------------------------------------------------------
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",   # React dev server
-]
+#CORS_ALLOWED_ORIGINS = [
+ #   "http://localhost:5173",   # React dev server
+  #  "http://localhost:3000", 
+#]
 
 # If needed:
-# CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = ['*']
+CORS_ALLOW_METHODS = ['*']
+CORS_ALLOW_ALL_ORIGINS = True
 
 
 # -----------------------------------------------------------
@@ -154,6 +159,7 @@ USE_TZ = True
 # -----------------------------------------------------------
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'static'
 
 
 # -----------------------------------------------------------
@@ -165,4 +171,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 

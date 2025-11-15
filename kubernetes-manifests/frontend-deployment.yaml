@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portfolio-frontend
+  namespace: portfolio
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: portfolio-frontend
+  template:
+    metadata:
+      labels:
+        app: portfolio-frontend
+    spec:
+      containers:
+      - name: portfolio-frontend
+        image: portfoliovijay.azurecr.io/portfolio-frontend:v1
+        ports:
+        - containerPort: 80
+      imagePullSecrets:
+      - name: acr-secret
+
