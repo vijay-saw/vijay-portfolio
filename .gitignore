@@ -1,0 +1,86 @@
+# ====================
+# PYTHON
+# ====================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# ====================
+# DJANGO
+# ====================
+
+# Django stuff:
+*.log
+*.pot
+*.pyc
+*.pyo
+*.sqlite3
+db.sqlite3
+
+# If using local settings
+/local_settings.py
+
+# Django static & media (optional — if generated or stored elsewhere)
+staticfiles/
+static/
+media/
+
+# ====================
+# ENVIRONMENT VARIABLES
+# ====================
+.env
+*.env
+.env.*
+
+# ====================
+# EDITORS & IDEs
+# ====================
+
+# VSCode
+.vscode/
+# PyCharm
+.idea/
+# Sublime
+*.sublime-project
+*.sublime-workspace
+
+# ====================
+# CACHE
+# ====================
+*.cache
+.cache/
+pip-wheel-metadata/
+django_project/__pycache__/
+
+# ====================
+# TESTING
+# ====================
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+
+# ====================
+# DOCKER
+# ====================
+docker-compose.override.yml
+*.pid
+
+# ====================
+# OTHER
+# ====================
+.DS_Store
+Thumbs.db
+
