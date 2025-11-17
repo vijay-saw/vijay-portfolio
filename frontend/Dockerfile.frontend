@@ -9,6 +9,14 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
+
+# REQUIRED so Vite loads .env.production
+ENV NODE_ENV=production
+
+# Optional but helps debugging build
+ARG VITE_API_URL
+ENV REACT_APP_API_URL=$VITE_API_URL
+
 RUN npm run build
 
 
@@ -17,14 +25,10 @@ RUN npm run build
 # -------------------------
 FROM nginx:alpine
 
-# Remove default nginx page
 RUN rm -rf /usr/share/nginx/html/*
 
-# Copy build output from Vite
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Expose nginx port
 EXPOSE 80
-
 CMD ["nginx", "-g", "daemon off;"]
 
