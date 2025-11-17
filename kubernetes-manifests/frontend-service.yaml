@@ -3,14 +3,12 @@ kind: Service
 metadata:
   name: portfolio-frontend
   namespace: portfolio
-  annotations:
-    service.beta.kubernetes.io/azure-load-balancer-resource-group: mc_vijay_portfoliocluster_centralindia
-    service.beta.kubernetes.io/azure-pip-name: 5bdd78ab-b7fb-4bd1-a5b2-f21cea7eb5c7
 spec:
-  type: NodePort
   selector:
     app: portfolio-frontend
   ports:
     - port: 80
       targetPort: 80
+      protocol: TCP
+  type: ClusterIP
 

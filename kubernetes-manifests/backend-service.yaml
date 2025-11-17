@@ -4,10 +4,11 @@ metadata:
   name: portfolio-backend
   namespace: portfolio
 spec:
-  type: NodePort
   selector:
     app: portfolio-backend
   ports:
-  - port: 8000
-    targetPort: 8000
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+  type: ClusterIP
 
