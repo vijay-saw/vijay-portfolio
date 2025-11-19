@@ -3,12 +3,10 @@ kind: Ingress
 metadata:
   name: portfolio-ingress
   namespace: portfolio
-  # no rewrite annotation now
 spec:
   ingressClassName: nginx
   rules:
-    - host: *
-      http:
+    - http:
         paths:
           # Backend API
           - path: /api
