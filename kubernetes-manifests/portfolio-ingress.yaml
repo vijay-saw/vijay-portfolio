@@ -8,7 +8,6 @@ spec:
   rules:
     - http:
         paths:
-          # Backend API
           - path: /api
             pathType: Prefix
             backend:
@@ -17,7 +16,6 @@ spec:
                 port:
                   number: 8000
 
-          # Django Admin
           - path: /admin
             pathType: Prefix
             backend:
@@ -26,7 +24,6 @@ spec:
                 port:
                   number: 8000
 
-          # Django Static Files
           - path: /static
             pathType: Prefix
             backend:
@@ -35,7 +32,6 @@ spec:
                 port:
                   number: 8000
 
-          # Django Media Files
           - path: /media
             pathType: Prefix
             backend:
@@ -44,7 +40,6 @@ spec:
                 port:
                   number: 8000
 
-          # Frontend
           - path: /
             pathType: Prefix
             backend:
