@@ -16,3 +16,4 @@ echo "Updated manifests:"
 grep "image:" backend-deployment.yaml
 grep "image:" frontend-deployment.yaml
 
+echo "done"
