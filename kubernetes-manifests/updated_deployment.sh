@@ -2,12 +2,7 @@
 set -e
 
 REGISTRY="portfoliovijay.azurecr.io"
-TAG=$1   # build-123
-
-if [ -z "$TAG" ]; then
-  echo "Usage: ./update_manifests.sh <IMAGE_TAG>"
-  exit 1
-fi
+TAG=$1
 
 cd kubernetes-manifests
 
@@ -20,9 +15,4 @@ sed -i "s|image: ${REGISTRY}/portfolio-frontend:.*|image: ${REGISTRY}/portfolio-
 echo "Updated manifests:"
 grep "image:" backend-deployment.yaml
 grep "image:" frontend-deployment.yaml
-
-# commit and push
-git add .
-git commit -m "Update images to ${TAG}"
-git push origin feature
 
