@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export default function Contact() {
   const [formData, setFormData] = useState({
     name: "",
@@ -29,8 +31,8 @@ export default function Contact() {
 
     try {
       setLoading(true);
-       const res = await fetch("http://localhost:8000/api/contact/", {
-
+       //const res = await fetch("http://localhost:8000/api/contact/", {
+        const res = await fetch(`${API_URL}/contact/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
