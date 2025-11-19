@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: portfolio-frontend
-        image: portfoliovijay.azurecr.io/portfolio-frontend:build-49
+        image: portfoliovijay.azurecr.io/portfolio-frontend:build-50
         ports:
         - containerPort: 80
       imagePullSecrets:
