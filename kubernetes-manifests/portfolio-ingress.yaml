@@ -26,6 +26,24 @@ spec:
                 port:
                   number: 8000
 
+          # Django Static Files
+          - path: /static
+            pathType: Prefix
+            backend:
+              service:
+                name: portfolio-backend
+                port:
+                  number: 8000
+
+          # Django Media Files
+          - path: /media
+            pathType: Prefix
+            backend:
+              service:
+                name: portfolio-backend
+                port:
+                  number: 8000
+
           # Frontend
           - path: /
             pathType: Prefix
