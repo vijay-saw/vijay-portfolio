@@ -21,6 +21,16 @@ spec:
         env:
         - name: DJANGO_SETTINGS_MODULE
           value: backend.settings
+        volumeMounts:
+        - name: backend-storage
+          mountPath: /app/media
+        - name: backend-storage
+          mountPath: /app/db.sqlite3
+          subPath: db.sqlite3
+      volumes:
+      - name: backend-storage
+        persistentVolumeClaim:
+          claimName: backend-storage
       imagePullSecrets:
       - name: acr-secret
 
