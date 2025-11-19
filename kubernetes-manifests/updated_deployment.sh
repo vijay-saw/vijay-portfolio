@@ -1,19 +1,30 @@
-#!/bin/bash
-set -e
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: portfolio-ingress
+  namespace: portfolio
+  # no rewrite annotation now
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: *
+      http:
+        paths:
+          # Backend API
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: portfolio-backend
+                port:
+                  number: 8000
 
-REGISTRY="portfoliovijay.azurecr.io"
-TAG=$1
+          # Frontend
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: portfolio-frontend
+                port:
+                  number: 80
 
-cd kubernetes-manifests
-
-echo "Updating backend image..."
-sed -i "s|image: ${REGISTRY}/portfolio-backend:.*|image: ${REGISTRY}/portfolio-backend:${TAG}|g" backend-deployment.yaml
-
-echo "Updating frontend image..."
-sed -i "s|image: ${REGISTRY}/portfolio-frontend:.*|image: ${REGISTRY}/portfolio-frontend:${TAG}|g" frontend-deployment.yaml
-
-echo "Updated manifests:"
-grep "image:" backend-deployment.yaml
-grep "image:" frontend-deployment.yaml
-
-echo "done"
