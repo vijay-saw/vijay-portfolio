@@ -1,10 +1,24 @@
 #!/bin/bash
 set -e
 
-echo "Running migrations..."
+echo ">>> Ensuring SQLite database exists..."
+if [ ! -f "/app/db.sqlite3" ]; then
+    echo ">>> Creating empty SQLite database file..."
+    touch /app/db.sqlite3
+    chmod 777 /app/db.sqlite3
+fi
+
+echo ">>> Ensuring media directory exists..."
+if [ ! -d "/app/media" ]; then
+    echo ">>> Creating media directory..."
+    mkdir -p /app/media
+    chmod -R 777 /app/media
+fi
+
+echo ">>> Running migrations..."
 python manage.py migrate --noinput
 
-echo "Creating superuser if it does not exist..."
+echo ">>> Creating superuser if not exists..."
 python manage.py shell <<EOF
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -12,8 +26,9 @@ if not User.objects.filter(username='admin').exists():
     User.objects.create_superuser('admin', 'admin@example.com', 'admin123')
 EOF
 
-echo "Collecting static..."
+echo ">>> Collecting static files..."
 python manage.py collectstatic --noinput
 
-echo "Starting Gunicorn..."
+echo ">>> Starting Gunicorn..."
 exec gunicorn backend.wsgi:application --bind 0.0.0.0:8000 --workers 3
+
