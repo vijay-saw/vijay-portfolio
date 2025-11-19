@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: portfolio-backend
-        image: portfoliovijay.azurecr.io/portfolio-backend:build-37
+        image: portfoliovijay.azurecr.io/portfolio-backend:build-38
         ports:
         - containerPort: 8000
         env:
