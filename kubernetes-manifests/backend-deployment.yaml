@@ -15,22 +15,25 @@ spec:
     spec:
       containers:
       - name: portfolio-backend
-        image: portfoliovijay.azurecr.io/portfolio-backend:build-135
+        image: portfoliovijay.azurecr.io/portfolio-backend:build-103
         ports:
         - containerPort: 8000
         env:
         - name: DJANGO_SETTINGS_MODULE
           value: backend.settings
+
         volumeMounts:
         - name: backend-storage
           mountPath: /app/media
+
         - name: backend-storage
-          mountPath: /app/db.sqlite3
-          subPath: db.sqlite3
+          mountPath: /app/data
+
       volumes:
       - name: backend-storage
         persistentVolumeClaim:
           claimName: backend-storage
+
       imagePullSecrets:
       - name: acr-secret
 
