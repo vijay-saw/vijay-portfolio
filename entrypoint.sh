@@ -1,12 +1,6 @@
 #!/bin/bash
 set -e
 
-echo ">>> Ensuring SQLite database exists..."
-if [ ! -f "/app/db.sqlite3" ]; then
-    echo ">>> Creating empty SQLite database file..."
-    touch /app/db.sqlite3
-    chmod 777 /app/db.sqlite3
-fi
 
 echo ">>> Ensuring media directory exists..."
 if [ ! -d "/app/media" ]; then

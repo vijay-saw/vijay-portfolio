@@ -25,10 +25,10 @@ spec:
         volumeMounts:
         - name: backend-storage
           mountPath: /app/media
-
+                  
         - name: backend-storage
-          mountPath: /app/data
-
+          mountPath: /app/db.sqlite3
+          subPath: db.sqlite3     
       volumes:
       - name: backend-storage
         persistentVolumeClaim:
