@@ -3,7 +3,7 @@ import axios from "axios";
 import { API_BASE } from "../api";
 import { Send, MessageCircle, X, Volume2, VolumeX } from "lucide-react";
 
-// Speech-to-text support
+// Speech-to-text
 const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -13,21 +13,17 @@ const Chatbot = () => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(true); // For manual speak only
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
 
   const chatEndRef = useRef(null);
-  const historyLoaded = useRef(false);
 
-  // Load chat history once
+  // Load chat history
   useEffect(() => {
-    if (!historyLoaded.current) {
-      const saved = JSON.parse(localStorage.getItem("chatHistory") || "[]");
-      setMessages(saved);
-      historyLoaded.current = true;
-    }
+    const saved = JSON.parse(localStorage.getItem("chatHistory") || "[]");
+    setMessages(saved);
   }, []);
 
-  // Auto-save to localStorage
+  // Save to localStorage
   useEffect(() => {
     localStorage.setItem("chatHistory", JSON.stringify(messages));
   }, [messages]);
@@ -37,37 +33,27 @@ const Chatbot = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  // Manual text-to-speech (ONLY when user clicks 🔊)
   const speak = (text) => {
     if (!voiceEnabled) return;
 
-    try {
-      const synth = window.speechSynthesis;
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = "en-US";
-      utter.rate = 1;
-      utter.pitch = 1;
-      synth.speak(utter);
-    } catch (err) {
-      console.error("TTS error:", err);
-    }
+    const synth = window.speechSynthesis;
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = "en-US";
+    synth.speak(utter);
   };
 
-  // Send message to backend
   const sendMessage = async () => {
     if (!input.trim()) return;
 
     const userMsg = { sender: "user", text: input };
-    const updated = [...messages, userMsg];
-
-    setMessages(updated);
+    setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setLoading(true);
 
     try {
       const res = await axios.post(`${API_BASE}/chat/`, {
-        history: updated,
-        message: input,
+        history: [...messages, userMsg],
+        message: userMsg.text,
       });
 
       const botMsg = { sender: "bot", text: res.data.reply };
@@ -82,7 +68,6 @@ const Chatbot = () => {
     setLoading(false);
   };
 
-  // Start Speech Recognition
   const startRecording = () => {
     if (!SpeechRecognition) {
       alert("Speech recognition not supported on this browser.");
@@ -99,7 +84,6 @@ const Chatbot = () => {
     recog.onresult = (event) => {
       const text = event.results[0][0].transcript;
       setInput(text);
-
       setRecording(false);
       setTimeout(sendMessage, 300);
     };
@@ -110,7 +94,7 @@ const Chatbot = () => {
 
   return (
     <>
-      {/* Floating toggle button */}
+      {/* Floating button */}
       <button
         onClick={() => setOpen(!open)}
         className="fixed bottom-6 right-6 z-50 p-4 rounded-full bg-indigo-600 text-white shadow-xl hover:bg-indigo-500 transition"
@@ -118,12 +102,19 @@ const Chatbot = () => {
         {open ? <X size={26} /> : <MessageCircle size={26} />}
       </button>
 
-      {/* Chatbox */}
+      {/* Chat window */}
       {open && (
         <div
-          className="fixed bottom-20 right-6 w-96 h-128 bg-slate-900 dark:bg-slate-100
-          text-white dark:text-slate-900 border border-slate-700 dark:border-slate-300
-          rounded-2xl shadow-2xl flex flex-col animate-slideUp"
+          className="
+            fixed bottom-20 right-4 left-4 sm:left-auto sm:right-6
+            w-[92vw] sm:w-96 
+            h-[60vh] sm:h-[500px]
+            bg-slate-900 dark:bg-slate-100
+            text-white dark:text-slate-900 
+            border border-slate-700 dark:border-slate-300
+            rounded-2xl shadow-2xl flex flex-col z-40
+            animate-slideUp
+          "
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700 dark:border-slate-300">
@@ -134,7 +125,6 @@ const Chatbot = () => {
               <h2 className="text-lg font-semibold">Vijay's AI Assistant</h2>
             </div>
 
-            {/* Voice Toggle On/Off */}
             <button
               onClick={() => setVoiceEnabled(!voiceEnabled)}
               className="p-2 hover:bg-slate-800 dark:hover:bg-slate-200 rounded-lg"
@@ -152,23 +142,21 @@ const Chatbot = () => {
             {messages.map((msg, idx) => (
               <div key={idx} className="flex items-start gap-2">
                 <div
-                  className={`max-w-[80%] p-3 text-sm rounded-xl shadow
+                  className={`max-w-[75%] p-3 text-sm rounded-xl shadow
                     ${
                       msg.sender === "user"
                         ? "ml-auto bg-indigo-600 text-white rounded-br-none"
-                        : "bg-slate-700 dark:bg-slate-200 dark:text-slate-900 text-white rounded-bl-none"
+                        : "bg-slate-700 dark:bg-slate-200 dark:text-slate-900 rounded-bl-none"
                     }
                   `}
                 >
                   {msg.text}
                 </div>
 
-                {/* Speak button only for bot */}
                 {msg.sender === "bot" && (
                   <button
                     onClick={() => speak(msg.text)}
                     className="p-2 text-indigo-400 hover:text-indigo-500"
-                    title="Speak this reply"
                   >
                     🔊
                   </button>
@@ -176,38 +164,28 @@ const Chatbot = () => {
               </div>
             ))}
 
-            {/* Typing animation */}
             {loading && (
-              <div className="flex items-center gap-2 text-gray-400 px-2">
-                <span className="dot-1">●</span>
-                <span className="dot-2">●</span>
-                <span className="dot-3">●</span>
-              </div>
-            )}
-
-            {/* Recording Waves */}
-            {recording && (
-              <div className="flex items-center justify-center mt-2">
-                <div className="wave">
-                  <div></div><div></div><div></div><div></div>
-                </div>
-              </div>
+              <div className="text-gray-400 text-sm px-2">Typing…</div>
             )}
 
             <div ref={chatEndRef} />
           </div>
 
-          {/* Input box */}
+          {/* Input */}
           <div className="flex items-center gap-2 p-3 border-t border-slate-700 dark:border-slate-300">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
               placeholder="Ask something…"
-              className="flex-1 p-2 rounded-lg bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 outline-none"
+              className="
+                flex-1 p-2 rounded-lg 
+                bg-slate-800 dark:bg-slate-200 
+                text-white dark:text-slate-900 
+                outline-none text-sm
+              "
             />
 
-            {/* Mic button */}
             <button
               onClick={startRecording}
               className={`p-3 rounded-full ${
@@ -219,7 +197,6 @@ const Chatbot = () => {
               🎤
             </button>
 
-            {/* Send button */}
             <button
               onClick={sendMessage}
               className="p-3 bg-indigo-600 text-white rounded-full hover:bg-indigo-500"
