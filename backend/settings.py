@@ -71,6 +71,10 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = ['*']
 CORS_ALLOW_METHODS = ['*']
 CORS_ALLOW_ALL_ORIGINS = True
+CSRF_TRUSTED_ORIGINS = [
+    "http://4.192.73.68",
+    "https://4.192.73.68",
+]
 
 
 # -----------------------------------------------------------
