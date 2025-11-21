@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Profile, Project, ContactMessage, Skill, Experience , Certification
-
+from .models import WhyHireMe
 
 # ==========================
 # PROFILE
@@ -76,6 +76,12 @@ class CertificationSerializer(serializers.ModelSerializer):
             return request.build_absolute_uri(obj.certificate_file.url)
         return None
 
+
+
+class WhyHireMeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WhyHireMe
+        fields = "__all__"
 # ==========================
 # EXPERIENCE
 # ==========================

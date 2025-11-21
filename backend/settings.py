@@ -3,6 +3,12 @@ Django settings for backend project.
 """
 
 from pathlib import Path
+import os
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+
+
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 

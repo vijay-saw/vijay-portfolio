@@ -7,6 +7,8 @@ from .views import (
     SkillListAPIView,
     ExperienceListAPIView,
     CertificationListAPIView,
+    WhyHireMeList,
+    ChatbotAPIView,
 )
 
 urlpatterns = [
@@ -16,5 +18,7 @@ urlpatterns = [
     path("experience/", ExperienceListAPIView.as_view(), name="experience-list"),
     path("certifications/", CertificationListAPIView.as_view(), name="certification-list"),
     path("contact/", ContactCreateAPIView.as_view(), name="contact-create"),
+    path("whyhireme/", WhyHireMeList.as_view(), name="whyhireme"),
+    path("chat/", ChatbotAPIView.as_view(), name="chatbot"),
 ]
 

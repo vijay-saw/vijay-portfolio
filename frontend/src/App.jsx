@@ -7,6 +7,8 @@ import Projects from "./components/Projects";
 import Certifications from "./components/Certifications";
 import Contact from "./components/Contact";
 import Footer from "./components/Footer";
+import WhyHireMe from "./components/WhyHireMe";
+import Chatbot from "./components/Chatbot";
 
 function App() {
   return (
@@ -16,6 +18,7 @@ function App() {
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,_#4f46e5_0,_transparent_55%),radial-gradient(circle_at_bottom,_#0ea5e9_0,_transparent_55%)] opacity-40" />
 
       <div className="relative">
+        
         <Navbar />
 
         {/* Main content */}
@@ -26,28 +29,40 @@ function App() {
             <Hero />
           </section>
 
+          {/* WHY HIRE ME */}
+          <section id="whyhireme" className="mt-16 scroll-mt-24">
+            <WhyHireMe />
+          </section>
+
           {/* SKILLS */}
           <section id="skills" className="mt-16 scroll-mt-24">
             <Skills />
           </section>
 
+          {/* EXPERIENCE */}
           <section id="experience" className="mt-16 scroll-mt-24">
             <Experience />
           </section>
 
+          {/* PROJECTS */}
           <section id="projects" className="mt-16 scroll-mt-24">
             <Projects />
           </section>
 
+          {/* CERTIFICATIONS */}
           <section id="certifications" className="mt-16 scroll-mt-24">
             <Certifications />
           </section>
 
-          <section className="mt-16">
+          {/* CONTACT */}
+          <section id="contact" className="mt-16 scroll-mt-24">
             <Contact />
           </section>
 
         </main>
+
+        {/* Chatbot must be outside main but inside layout */}
+        <Chatbot />
 
         <Footer />
       </div>

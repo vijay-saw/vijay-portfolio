@@ -30,7 +30,18 @@ class ContactMessage(models.Model):
     email = models.EmailField()
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    
+class WhyHireMe(models.Model):
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    icon = models.CharField(max_length=10, blank=True, null=True)  # for emojis or icons
+    priority = models.IntegerField(default=0)  # ordering
+
+    class Meta:
+        ordering = ['priority']
 
     def __str__(self):
-        return f"Message from {self.name}"
+        return self.title
+
+
 
