@@ -4,6 +4,10 @@ from rest_framework.views import APIView
 from groq import Groq
 import os
 
+# CSRF FIX
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+
 from .models import (
     Profile,
     Project,
@@ -97,7 +101,7 @@ class ContactCreateAPIView(generics.CreateAPIView):
 
 
 # ===========================================
-# AI CHATBOT — DYNAMIC USING DATABASE
+# AI CHATBOT SUPPORT FUNCTIONS
 # ===========================================
 
 def build_dynamic_context():
@@ -110,6 +114,8 @@ def build_dynamic_context():
         context["profile"] = (
             f"Name: {profile.name}, Role: {profile.role}, Summary: {profile.summary}"
         )
+    else:
+        context["profile"] = ""
 
     # Skills
     skills = Skill.objects.all().values_list("name", flat=True)
@@ -144,6 +150,11 @@ def build_dynamic_context():
     return context
 
 
+# ===========================================
+# CHATBOT API (CSRF EXEMPT ✔ FIXED)
+# ===========================================
+
+@method_decorator(csrf_exempt, name='dispatch')
 class ChatbotAPIView(APIView):
 
     def post(self, request):
@@ -171,7 +182,7 @@ Additional AI Profile Details: {context['ai_profile']}
 ALWAYS answer based on this information.
 """
 
-        # Build message history for conversation
+        # Build conversation history
         messages = [{"role": "system", "content": system_prompt}]
 
         for msg in history:
