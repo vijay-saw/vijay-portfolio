@@ -68,13 +68,20 @@ pipeline {
         }
     }
 
-    post {
-        success {
-            echo "CI Completed successfully."
-        }
-        failure {
-            echo "CI failed."
-        }
+
+post {
+    success {
+        echo "CI completed successfully. Triggering CD pipeline..."
+
+        // Trigger CD pipeline (MYAPP_CD job)
+        build job: 'MYAPP_CD', wait: false
     }
+    failure {
+        echo "CI failed. CD will not run."
+    }
+}
+
+
+
 }
 

@@ -95,6 +95,25 @@ class Certification(models.Model):
         null=True
     )  # PDF or Image
 
+
+
+class WhyHireMe(models.Model):
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    icon = models.CharField(max_length=10, blank=True, null=True)  # for emojis or icons
+    priority = models.IntegerField(default=0)  # ordering
+
+    class Meta:
+        ordering = ['priority']
+
+class AIProfile(models.Model):
+    about_me = models.TextField()
+    skills = models.TextField()
+    experience = models.TextField()
+    projects = models.TextField()
+    certifications = models.TextField()
+    achievements = models.TextField()
+
     def __str__(self):
-        return self.title
+        return "AI Profile Data"
 
