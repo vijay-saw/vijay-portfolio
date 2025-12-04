@@ -1,92 +1,160 @@
+# portfolio/serializers.py
 from rest_framework import serializers
-from .models import Profile, Project, ContactMessage, Skill, Experience , Certification
-from .models import WhyHireMe
+from .models import (
+    Profile,
+    Skill,
+    Project,
+    Experience,
+    Certification,
+    WhyHireMe,
+    AIProfile,
+    ContactMessage,
+)
 
-# ==========================
-# PROFILE
-# ==========================
-class ProfileSerializer(serializers.ModelSerializer):
-    photo = serializers.SerializerMethodField()
-    resume = serializers.SerializerMethodField()
+# --------- CHILD SERIALIZERS ---------
 
-    class Meta:
-        model = Profile
-        fields = "__all__"
-
-    def get_photo(self, obj):
-        request = self.context.get("request")
-        if obj.photo:
-            return request.build_absolute_uri(obj.photo.url)
-        return None
-
-    def get_resume(self, obj):
-        request = self.context.get("request")
-        if obj.resume:
-            return request.build_absolute_uri(obj.resume.url)
-        return None
-
-
-# ==========================
-# PROJECT
-# ==========================
-class ProjectSerializer(serializers.ModelSerializer):
-    project_image = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Project
-        fields = "__all__"
-
-    def get_project_image(self, obj):
-        if obj.project_image:
-            request = self.context.get("request")
-            return request.build_absolute_uri(obj.project_image.url)
-        return None
-
-
-# ==========================
-# CONTACT
-# ==========================
-class ContactMessageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ContactMessage
-        fields = "__all__"
-
-
-# ==========================
-# SKILL
-# ==========================
 class SkillSerializer(serializers.ModelSerializer):
     class Meta:
         model = Skill
-        fields = "__all__"
+        fields = ["id", "category", "name", "level", "order"]
 
 
+class ExperienceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Experience
+        fields = [
+            "id",
+            "role",
+            "company",
+            "start_date",
+            "end_date",
+            "is_current",
+            "description",
+            "order",
+        ]
+
+
+class ProjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Project
+        fields = [
+            "id",
+            "title",
+            "description",
+            "tech_stack",
+            "github_url",
+            "demo_url",
+            "project_image",
+            "highlight",
+            "order",
+            "created_at",
+        ]
 
 
 class CertificationSerializer(serializers.ModelSerializer):
-    certificate_file = serializers.SerializerMethodField()
+    profile_username = serializers.SerializerMethodField()
 
     class Meta:
         model = Certification
-        fields = "__all__"
+        fields = [
+            "id",
+            "name",             # ✔ use this
+            "issuer",
+            "issue_date",
+            "expiry_date",
+            "credential_id",
+            "credential_url",
+            "profile",
+            "profile_username",
+        ]
 
-    def get_certificate_file(self, obj):
-        if obj.certificate_file:
-            request = self.context.get("request")
-            return request.build_absolute_uri(obj.certificate_file.url)
+    def get_profile_username(self, obj):
+        if obj.profile:
+            return obj.profile.username
         return None
-
 
 
 class WhyHireMeSerializer(serializers.ModelSerializer):
     class Meta:
         model = WhyHireMe
-        fields = "__all__"
-# ==========================
-# EXPERIENCE
-# ==========================
-class ExperienceSerializer(serializers.ModelSerializer):
+        fields = ["id", "title", "description", "icon", "priority"]
+
+
+class AIProfileSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Experience
-        fields = "__all__"
+        model = AIProfile
+        fields = [
+            "id",
+            "about_me",
+            "skills",
+            "experience",
+            "projects",
+            "certifications",
+            "achievements",
+        ]
+
+
+class ContactMessageSerializer(serializers.ModelSerializer):
+    profile_username = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = ContactMessage
+        fields = [
+            "id",
+            "name",
+            "email",
+            "message",
+            "created_at",
+            "profile",
+            "profile_username",
+            "is_read",            # 👈 NEW
+        ]
+        extra_kwargs = {
+            "profile": {"read_only": True},
+            "is_read": {"read_only": True},  # we’ll change it via a custom action
+        }
+
+    def get_profile_username(self, obj):
+        if obj.profile:
+            return obj.profile.username
+        return None
+
+
+# --------- PROFILE SERIALIZER (NESTED) ---------
+
+class ProfileSerializer(serializers.ModelSerializer):
+    # nested, read-only relations
+    skills = SkillSerializer(many=True, read_only=True)
+    experiences = ExperienceSerializer(many=True, read_only=True)
+    projects = ProjectSerializer(many=True, read_only=True)
+    certifications = CertificationSerializer(many=True, read_only=True)
+    whyhiremes = WhyHireMeSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Profile
+        fields = [
+            "id",
+            "user",
+            "name",
+            "username",
+            "role",
+            "summary",
+            "location",
+            "email",
+            "linkedin",
+            "github",
+            "photo",
+            "resume",
+            "public",
+            "created_at",
+            # nested data:
+            "skills",
+            "experiences",
+            "projects",
+            "certifications",
+            "whyhiremes",
+        ]
+        extra_kwargs = {
+            "user": {"read_only": True},  # don’t require user on updateProfile
+        }
 

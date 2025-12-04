@@ -1,76 +1,90 @@
+// frontend/src/components/Projects.jsx
 import { useEffect, useState } from "react";
-import { getProjects } from "../api";
-import { ExternalLink } from "lucide-react";
+import AOS from "aos";
+import "aos/dist/aos.css";
 
-const Projects = () => {
-  const [projects, setProjects] = useState([]);
+import { getProjects, getPublicProjects } from "../api";
+
+/**
+ * Projects
+ * - items prop → render directly (public profile)
+ * - else:
+ *    - isPublic = true  → site-owner projects
+ *    - isPublic = false → logged-in user's projects
+ */
+const Projects = ({ isPublic = true, items }) => {
+  const [projects, setProjects] = useState(items || []);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    getProjects().then((res) => setProjects(res.data));
-  }, []);
+    AOS.init({ duration: 700, easing: "ease-out-cubic" });
+
+    if (items !== undefined && items !== null) {
+      setProjects(items || []);
+      AOS.refresh();
+      return;
+    }
+
+    setError(null);
+
+    if (isPublic) {
+      getPublicProjects()
+        .then((res) => {
+          setProjects(res.data || []);
+          AOS.refresh();
+        })
+        .catch(() => setError("Unable to load projects."));
+      return;
+    }
+
+    getProjects()
+      .then((res) => {
+        setProjects(res.data || []);
+        AOS.refresh();
+      })
+      .catch(() => setError("Unable to load projects."));
+  }, [isPublic, items]);
+
+  if (error) {
+    return (
+      <section className="py-16 px-6">
+        <h2 className="text-center text-4xl font-bold text-white mb-6">
+          Projects
+        </h2>
+        <p className="text-center text-gray-300">{error}</p>
+      </section>
+    );
+  }
+
+  if (!projects.length) return null;
 
   return (
-    <section id="projects" className="pt-14 pb-16 px-6 max-w-6xl mx-auto">
-      <h2
-        className="text-center text-4xl font-bold text-white mb-16"
-        data-aos="fade-down"
-      >
+    <section id="projects" className="py-16 px-6">
+      <h2 className="text-center text-4xl font-bold text-white mb-12">
         Projects
       </h2>
-
-      <div className="grid md:grid-cols-2 gap-10">
+      <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
         {projects.map((p, index) => (
           <div
-            key={p.id}
+            key={p.id || index}
             data-aos="fade-up"
-            data-aos-delay={index * 150}  // stagger animation
-            className="bg-slate-900/40 border border-slate-700/60 rounded-xl p-6 
-                       hover:scale-[1.02] transition-all shadow-md backdrop-blur-xl"
+            data-aos-delay={index * 100}
+            className="bg-slate-900 border border-slate-700 rounded-xl p-6"
           >
             {p.project_image && (
               <img
                 src={p.project_image}
                 alt={p.title}
-                data-aos="zoom-in"
-                className="rounded-lg mb-5 w-full h-48 object-cover"
+                className="w-full h-40 object-cover rounded mb-4"
               />
             )}
-
-            <h3 className="text-2xl font-semibold text-white mb-2">
-              {p.title}
-            </h3>
-
-            <p className="text-slate-300 text-sm mb-4">
-              {p.description}
-            </p>
-
-            <p className="text-indigo-300 text-xs mb-4">
-              Tech Stack: {p.tech_stack}
-            </p>
-
-            <div className="flex gap-4 mt-4">
-              {p.github_url && (
-                <a
-                  href={p.github_url}
-                  target="_blank"
-                  className="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm 
-                             hover:bg-slate-700 transition"
-                >
-                  GitHub
-                </a>
-              )}
-
-              {p.demo_url && (
-                <a
-                  href={p.demo_url}
-                  target="_blank"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm 
-                             hover:bg-indigo-500 transition"
-                >
-                  Live Demo
-                </a>
-              )}
-            </div>
+            <h3 className="text-xl font-semibold text-white">{p.title}</h3>
+            <p className="text-slate-300 mt-2">{p.description}</p>
+            {p.tech_stack && (
+              <p className="text-indigo-300 text-xs mt-2">
+                Tech Stack: {p.tech_stack}
+              </p>
+            )}
           </div>
         ))}
       </div>

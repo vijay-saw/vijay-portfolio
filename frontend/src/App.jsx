@@ -1,4 +1,7 @@
 // src/App.jsx
+import { Routes, Route } from "react-router-dom";
+
+// your existing components
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import Skills from "./components/Skills";
@@ -10,63 +13,59 @@ import Footer from "./components/Footer";
 import WhyHireMe from "./components/WhyHireMe";
 import Chatbot from "./components/Chatbot";
 
-function App() {
+import PublicProfile from "./pages/PublicProfile";
+
+// pages
+import Register from "./pages/Register";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import ProtectedRoute from "./auth/ProtectedRoute";
+
+function HomePage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50">
-
-      {/* background gradients */}
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,_#4f46e5_0,_transparent_55%),radial-gradient(circle_at_bottom,_#0ea5e9_0,_transparent_55%)] opacity-40" />
-
       <div className="relative">
-        
         <Navbar />
-
-        {/* Main content */}
         <main className="mx-auto max-w-6xl px-4 pb-16 pt-24 sm:px-6 lg:px-8">
-
-          {/* HERO */}
-          <section id="home" className="scroll-mt-24">
-            <Hero />
-          </section>
-
-          {/* WHY HIRE ME */}
-          <section id="whyhireme" className="mt-16 scroll-mt-24">
-            <WhyHireMe />
-          </section>
-
-          {/* SKILLS */}
-          <section id="skills" className="mt-16 scroll-mt-24">
-            <Skills />
-          </section>
-
-          {/* EXPERIENCE */}
-          <section id="experience" className="mt-16 scroll-mt-24">
-            <Experience />
-          </section>
-
-          {/* PROJECTS */}
-          <section id="projects" className="mt-16 scroll-mt-24">
-            <Projects />
-          </section>
-
-          {/* CERTIFICATIONS */}
-          <section id="certifications" className="mt-16 scroll-mt-24">
-            <Certifications />
-          </section>
-
-          {/* CONTACT */}
-          <section id="contact" className="mt-16 scroll-mt-24">
-            <Contact />
-          </section>
-
+          <section id="home" className="scroll-mt-24"><Hero /></section>
+          <section id="whyhireme" className="mt-16 scroll-mt-24"><WhyHireMe /></section>
+          <section id="skills" className="mt-16 scroll-mt-24"><Skills /></section>
+          <section id="experience" className="mt-16 scroll-mt-24"><Experience /></section>
+          <section id="projects" className="mt-16 scroll-mt-24"><Projects /></section>
+          <section id="certifications" className="mt-16 scroll-mt-24"><Certifications /></section>
+          <section id="contact" className="mt-16 scroll-mt-24"><Contact /></section>
         </main>
-
-        {/* Chatbot must be outside main but inside layout */}
         <Chatbot />
-
         <Footer />
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/login" element={<Login />} />
+
+      {/* Protected dashboard must appear BEFORE /:username */}
+      <Route
+        path="/dashboard/*"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Explicit public profile route */}
+      <Route path="/public/:username" element={<PublicProfile />} />
+
+      {/* last: single-segment username fallback (if you still want it) */}
+      <Route path="/:username" element={<PublicProfile />} />
+    </Routes>
   );
 }
 

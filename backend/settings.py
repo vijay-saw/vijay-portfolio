@@ -7,9 +7,6 @@ import os
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 
-
-
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-fg^(=c(pb1!ml)tmf3m0mss2_-q#c1-dn8d@)d@(e)%@d+^@*q'
@@ -62,8 +59,8 @@ MIDDLEWARE = [
 # -----------------------------------------------------------
 
 #CORS_ALLOWED_ORIGINS = [
- #   "http://localhost:5173",   # React dev server
-  #  "http://localhost:3000", 
+#    "http://localhost:5173",   # React dev server
+#    "http://localhost:3000",
 #]
 
 # If needed:
@@ -82,11 +79,14 @@ CSRF_TRUSTED_ORIGINS = [
 # -----------------------------------------------------------
 
 REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': [
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    # keep default permission loose for now; tighten later
+    'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.AllowAny',
-    ]
+    ),
 }
-
 
 # -----------------------------------------------------------
 # URL CONFIGURATION
@@ -127,12 +127,11 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # -----------------------------------------------------------
 
 #DATABASES = {
- #   'default': {
-  #      'ENGINE': 'django.db.backends.sqlite3',
-   #     'NAME': BASE_DIR / 'db.sqlite3',
-   # }
+#    'default': {
+#        'ENGINE': 'django.db.backends.sqlite3',
+#        'NAME': BASE_DIR / 'db.sqlite3',
+#    }
 #}
-
 
 DATABASES = {
     'default': {
@@ -141,7 +140,8 @@ DATABASES = {
     }
 }
 
-
+# 👇 This is the username whose portfolio is the default site owner
+DEFAULT_OWNER_USERNAME = "vijay"   # change to your default username
 
 
 # -----------------------------------------------------------
@@ -192,7 +192,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-
-
 

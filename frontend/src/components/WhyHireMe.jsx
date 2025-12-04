@@ -1,49 +1,80 @@
+// frontend/src/components/WhyHireMe.jsx
 import { useEffect, useState } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
+import { getWhyHireMe, getPublicWhyHireMe } from "../api";
 
-import { getWhyHireMe } from "/src/api";
-
-const WhyHireMe = () => {
-  const [items, setItems] = useState([]);
+/**
+ * WhyHireMe
+ * - If `items` prop given → render that list (public profile)
+ * - Else:
+ *    - isPublic = true  → site-owner public items
+ *    - isPublic = false → logged-in user's items (dashboard)
+ */
+const WhyHireMe = ({ isPublic = true, items }) => {
+  const [cards, setCards] = useState(items || []);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    AOS.init({ duration: 800, easing: "ease-out-cubic" });
+    AOS.init({ duration: 700, easing: "ease-out-cubic" });
+
+    if (items !== undefined && items !== null) {
+      setCards(items || []);
+      AOS.refresh();
+      return;
+    }
+
+    setError(null);
+
+    if (isPublic) {
+      getPublicWhyHireMe()
+        .then((res) => {
+          setCards(res.data || []);
+          AOS.refresh();
+        })
+        .catch(() => setError("Unable to load highlights."));
+      return;
+    }
 
     getWhyHireMe()
-      .then(res => {
-        setItems(res.data);
-        AOS.refresh();  // IMPORTANT for newly loaded content
+      .then((res) => {
+        setCards(res.data || []);
+        AOS.refresh();
       })
-      .catch(err => console.error("Error loading WhyHireMe:", err));
-  }, []);
+      .catch(() => setError("Unable to load highlights."));
+  }, [isPublic, items]);
+
+  if (error) {
+    return (
+      <section className="py-16 px-6">
+        <h2 className="text-center text-4xl font-bold text-white mb-6">
+          Why Hire Me?
+        </h2>
+        <p className="text-center text-gray-300">{error}</p>
+      </section>
+    );
+  }
+
+  if (!cards.length) return null;
 
   return (
-    <section className="py-20 px-6 md:px-20">
-      <h2 
-        className="text-center text-4xl font-bold text-white mb-14"
-        data-aos="fade-up"
-      >
+    <section className="py-16 px-6">
+      <h2 className="text-center text-4xl font-bold text-white mb-12">
         Why Hire Me?
       </h2>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-        {items.map((item, index) => (
+      <div className="grid gap-6 md:grid-cols-2 max-w-6xl mx-auto">
+        {cards.map((item, index) => (
           <div
-            key={index}
+            key={item.id || index}
             data-aos="fade-up"
-            data-aos-delay={index * 150}   // Stagger animation
-            className="p-8 rounded-xl bg-gradient-to-br from-[#0e1628] to-[#0a1220] border border-white/10 shadow-lg hover:shadow-xl hover:scale-[1.03] transition-all duration-300"
+            data-aos-delay={index * 100}
+            className="p-6 rounded-xl bg-gradient-to-br from-[#0e1628] to-[#0a1220] border border-white/10 shadow-lg"
           >
             <div className="text-4xl mb-4">{item.icon}</div>
-
-            <h3 className="text-xl font-semibold text-white mb-3">
+            <h3 className="text-xl font-semibold text-white mb-2">
               {item.title}
             </h3>
-
-            <p className="text-gray-300 leading-relaxed">
-              {item.description}
-            </p>
+            <p className="text-gray-300">{item.description}</p>
           </div>
         ))}
       </div>

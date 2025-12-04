@@ -1,83 +1,90 @@
+// frontend/src/components/Experience.jsx
 import { useEffect, useState } from "react";
-import { getExperience } from "../api";
+import AOS from "aos";
+import "aos/dist/aos.css";
 
-const Experience = () => {
-  const [items, setItems] = useState([]);
+import { getExperience, getPublicExperience } from "../api";
+
+/**
+ * Experience
+ * - items prop → render directly (public profile)
+ * - otherwise:
+ *   - isPublic = true  → site-owner public experience
+ *   - isPublic = false → logged-in user's experience
+ */
+const Experience = ({ isPublic = true, items }) => {
+  const [experience, setExperience] = useState(items || []);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    getExperience().then((res) => setItems(res.data));
-  }, []);
+    AOS.init({ duration: 700, easing: "ease-out-cubic" });
+
+    if (items !== undefined && items !== null) {
+      setExperience(items || []);
+      AOS.refresh();
+      return;
+    }
+
+    setError(null);
+
+    if (isPublic) {
+      getPublicExperience()
+        .then((res) => {
+          setExperience(res.data || []);
+          AOS.refresh();
+        })
+        .catch(() => setError("Unable to load experience."));
+      return;
+    }
+
+    getExperience()
+      .then((res) => {
+        setExperience(res.data || []);
+        AOS.refresh();
+      })
+      .catch(() => setError("Unable to load experience."));
+  }, [isPublic, items]);
+
+  if (error) {
+    return (
+      <section className="py-16 px-6">
+        <h2 className="text-center text-4xl font-bold text-white mb-6">
+          Experience
+        </h2>
+        <p className="text-center text-gray-300">{error}</p>
+      </section>
+    );
+  }
+
+  if (!experience.length) return null;
 
   return (
-    <section
-      id="experience"
-      className="px-6 py-14 max-w-6xl mx-auto scroll-mt-24"
-      data-aos="fade-up"
-    >
-      <h2 className="text-center text-4xl font-bold text-white mb-16"
-          data-aos="fade-down">
+    <section id="experience" className="py-16 px-6">
+      <h2 className="text-center text-4xl font-bold text-white mb-12">
         Experience
       </h2>
-
-      <div className="relative">
-
-        {/* Horizontal Line */}
-        <div
-          className="absolute top-14 left-[8%] right-[8%] h-[2px] bg-slate-600/40 rounded-full"
-          data-aos="fade-right"
-          data-aos-delay="200"
-        />
-
-        {/* Timeline Wrapper */}
-        <div className="flex flex-col sm:flex-row sm:justify-evenly sm:gap-10 gap-24">
-
-          {items.map((exp, index) => (
-            <div
-              key={exp.id}
-              className="flex flex-col items-center text-center w-full sm:w-[30%]"
-              data-aos="fade-up"
-              data-aos-delay={index * 150}  // staggered animation
-            >
-              {/* Icon */}
-              <div
-                className="relative z-10 mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-500 shadow-lg shadow-indigo-500/40"
-                data-aos="zoom-in"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="white"
-                  viewBox="0 0 24 24"
-                  className="h-6 w-6"
-                >
-                  <path d="M4 7V6a4 4 0 014-4h8a4 4 0 014 4v1h1a1 1 0 011 1v5a3 3 0 01-3 3h-1v3a1 1 0 01-1 1H7a1 1 0 01-1-1v-3H5a3 3 0 01-3-3V8a1 1 0 011-1h1zm2 0h12V6a2 2 0 00-2-2H8a2 2 0 00-2 2v1z" />
-                </svg>
-              </div>
-
-              {/* Card */}
-              <div
-                className="rounded-xl bg-[#0b1221] p-5 shadow-md border border-slate-700 hover:border-indigo-400 transition w-full"
-                data-aos="fade-up"
-                data-aos-delay={index * 200}
-              >
-                <h3 className="text-lg font-semibold text-indigo-300">
-                  {exp.role}
-                </h3>
-
-                <p className="text-sm text-gray-400 mt-1">{exp.company}</p>
-
-                <p className="text-xs text-gray-500 mt-1">
-                  {exp.start_date} – {exp.end_date}
-                </p>
-
-                <p className="text-sm text-gray-300 mt-4 leading-relaxed">
-                  {exp.description}
-                </p>
-              </div>
-
-            </div>
-          ))}
-
-        </div>
+      <div className="space-y-6 max-w-6xl mx-auto">
+        {experience.map((exp, index) => (
+          <div
+            key={exp.id || index}
+            data-aos="fade-up"
+            data-aos-delay={index * 100}
+            className="bg-slate-900 border border-slate-700 rounded-xl p-6"
+          >
+            <h3 className="text-xl font-semibold text-indigo-200">
+              {exp.role}
+            </h3>
+            <p className="text-slate-300">{exp.company}</p>
+            <p className="text-slate-500 text-xs mt-1">
+              {exp.start_date} – {exp.end_date || "Present"}
+            </p>
+            {exp.description && (
+              <p className="text-slate-300 mt-3 whitespace-pre-line">
+                {exp.description}
+              </p>
+            )}
+          </div>
+        ))}
       </div>
     </section>
   );

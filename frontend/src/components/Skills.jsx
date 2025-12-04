@@ -1,17 +1,66 @@
+// frontend/src/components/Skills.jsx
 import { useEffect, useState } from "react";
-import { getSkills } from "../api";
+import AOS from "aos";
+import "aos/dist/aos.css";
 
-const Skills = () => {
-  const [skills, setSkills] = useState([]);
+import { getSkills, getPublicSkills } from "../api";
+
+/**
+ * Skills component
+ *
+ * - If `items` prop is provided → uses that list directly (no API call).
+ * - Else:
+ *    - isPublic = true  → uses getPublicSkills()  (default Vijay homepage)
+ *    - isPublic = false → uses getSkills()        (logged-in dashboard)
+ */
+const Skills = ({ isPublic = true, items }) => {
+  const [skills, setSkills] = useState(items || []);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    getSkills().then((res) => setSkills(res.data));
-  }, []);
+    AOS.init({ duration: 700, easing: "ease-out-cubic" });
+
+    // If parent passed skills explicitly (public profile),
+    // just use them and skip API calls.
+    if (items !== undefined && items !== null) {
+      setSkills(items || []);
+      AOS.refresh();
+      return;
+    }
+
+    setError(null);
+
+    // PUBLIC MODE (homepage)
+    if (isPublic) {
+      getPublicSkills()
+        .then((res) => {
+          setSkills(res.data || []);
+          AOS.refresh();
+        })
+        .catch(() => setError("Unable to load skills."));
+      return;
+    }
+
+    // PRIVATE MODE (dashboard)
+    getSkills()
+      .then((res) => {
+        setSkills(res.data || []);
+        AOS.refresh();
+      })
+      .catch((err) => {
+        if (err?.response?.status === 401) {
+          setError("Please log in to view skills.");
+        } else {
+          setError("Unable to load skills right now.");
+        }
+      });
+  }, [isPublic, items]);
 
   // Group by category
   const grouped = skills.reduce((acc, skill) => {
-    if (!acc[skill.category]) acc[skill.category] = [];
-    acc[skill.category].push(skill.name);
+    const cat = skill.category || "other";
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(skill.name);
     return acc;
   }, {});
 
@@ -21,39 +70,40 @@ const Skills = () => {
         Skills
       </h2>
 
-      {/* Compact 3-column grid */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
+      {error ? (
+        <p className="text-center text-gray-300 text-lg" data-aos="fade-up">
+          {error}
+        </p>
+      ) : (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
+          {Object.entries(grouped).map(([category, items], index) => (
+            <div
+              key={category}
+              data-aos="fade-up"
+              data-aos-delay={index * 100}
+              className="rounded-xl bg-[#0d152b] border border-slate-800 p-5
+                         shadow-md hover:border-indigo-400 transition h-full"
+            >
+              <h3 className="text-lg font-semibold text-indigo-300 mb-3 capitalize">
+                {category}
+              </h3>
 
-        {Object.entries(grouped).map(([category, items], index) => (
-          <div
-            key={category}
-            data-aos="fade-up"
-            data-aos-delay={index * 100}
-            className="rounded-xl bg-[#0d152b] border border-slate-800 p-5 
-                       shadow-md hover:border-indigo-400 transition h-full"
-          >
-            {/* Category Title */}
-            <h3 className="text-lg font-semibold text-indigo-300 mb-3 capitalize">
-              {category}
-            </h3>
-
-            {/* More compact badges */}
-            <div className="flex flex-wrap gap-1.5">
-              {items.map((item, i) => (
-                <span
-                  key={i}
-                  className="px-2.5 py-0.5 text-[11px] rounded-lg bg-slate-900 
-                             border border-slate-700 text-slate-200
-                             hover:border-indigo-400 hover:text-indigo-300 transition"
-                >
-                  {item}
-                </span>
-              ))}
+              <div className="flex flex-wrap gap-1.5">
+                {items.map((item, i) => (
+                  <span
+                    key={i}
+                    className="px-2.5 py-0.5 text-[11px] rounded-lg bg-slate-900
+                               border border-slate-700 text-slate-200
+                               hover:border-indigo-400 hover:text-indigo-300 transition"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
-
-      </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 };
