@@ -384,7 +384,7 @@ def chat_with_ai(request):
         f"{e.role} at {e.company}" for e in exp_qs if e.role and e.company
     ) or "not specified yet"
     proj_text = "; ".join(p.title for p in proj_qs if p.title) or "no projects listed yet"
-    cert_text = "; ".join(c.title for c in cert_qs if c.title) or "no certifications listed yet"
+    cert_text = "; ".join(c.name for c in cert_qs if c.name) or "no certifications listed yet"
 
     # AIProfile extras
     about_ai = safe(getattr(ai_profile, "about_me", ""))
