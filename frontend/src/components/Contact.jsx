@@ -1,12 +1,10 @@
 // frontend/src/components/Contact.jsx
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { API_BASE } from "../api"; // ✅ Use global API base
 
 export default function Contact() {
-  // gets "vijay", "shubham", etc. from route like "/:username"
-  const { username } = useParams();
+  const { username } = useParams(); // "vijay", "shubham", etc.
 
   const [formData, setFormData] = useState({
     name: "",
@@ -37,12 +35,12 @@ export default function Contact() {
     try {
       setLoading(true);
 
-      const res = await fetch(`${API_URL}/contact-messages/`, {
+      const res = await fetch(`${API_BASE}/contact-messages/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          owner_username: username, // 🔥 this tells backend whose profile it is
+          owner_username: username || "vijay", // fallback to default owner
         }),
       });
 
@@ -66,10 +64,7 @@ export default function Contact() {
       data-aos="fade-up"
     >
       <div className="max-w-xl mx-auto">
-        <h2
-          className="text-center text-4xl font-bold mb-8"
-          data-aos="fade-down"
-        >
+        <h2 className="text-center text-4xl font-bold mb-8" data-aos="fade-down">
           Contact Me
         </h2>
 

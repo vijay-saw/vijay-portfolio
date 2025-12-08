@@ -19,6 +19,7 @@ import CertificationsEditor from "./dashboard/CertificationsEditor";
 import ThemeSelector from "./dashboard/ThemeSelector";
 import ProfileEditor from "./dashboard/ProfileEditor";
 import MessagesPanel from "./dashboard/MessagesPanel.jsx";
+import WhyHireMeEditor from "./dashboard/WhyHireMeEditor";
 import PublicViewControls from "./dashboard/PublicViewControls.jsx";
 
 const SIDEBAR = [
@@ -27,6 +28,7 @@ const SIDEBAR = [
   { key: "projects", label: "Projects" },
   { key: "experience", label: "Experience" },
   { key: "certifications", label: "Certifications" },
+  { key: "whyhireme", label: "Why Hire Me" },
   { key: "themes", label: "Themes" },
   { key: "public", label: "My Public Portfolio" },
   { key: "messages", label: "Messages" },
@@ -58,7 +60,7 @@ function Sidebar({ active, setActive, unreadCount }) {
         {SIDEBAR.map((s) => {
           const isActive = active === s.key;
           const baseClasses =
-            "text-left px-3 py-2 rounded transition-colors flex items-center justify-between gap-2";
+            "text-left px-3 py-2 rounded transition-colors flex items-center justify-between gap-2 text-sm md:text-base";
           const colorClasses = isActive
             ? "bg-slate-800 text-white"
             : "text-slate-300 hover:bg-slate-800";
@@ -93,7 +95,8 @@ export default function Dashboard() {
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState(null);
   const [copyStatus, setCopyStatus] = useState("");
-  const [unreadCount, setUnreadCount] = useState(0); // 👈 NEW
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // 👈 NEW
 
   // Load profile
   const fetchProfile = async () => {
@@ -132,6 +135,8 @@ export default function Dashboard() {
     } catch (e) {
       // ignore localStorage errors
     }
+    // Close sidebar on mobile when navigating
+    setSidebarOpen(false);
   };
 
   const displayName =
@@ -160,104 +165,148 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-50">
-      <Sidebar
-        active={active}
-        setActive={handleSetActive}
-        unreadCount={unreadCount} // 👈 pass into sidebar
-      />
+    <div className="min-h-screen bg-slate-950 text-slate-50">
+      {/* MOBILE TOP BAR */}
+      <div className="md:hidden sticky top-0 z-40 w-full bg-slate-900 px-4 py-3 flex items-center justify-between border-b border-slate-800">
+        <h2 className="text-lg font-semibold">Dashboard</h2>
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="text-white text-2xl leading-none"
+          aria-label="Open menu"
+        >
+          ☰
+        </button>
+      </div>
 
-      <main className="flex-1 p-8">
-        <div className="max-w-5xl mx-auto">
-          {/* Top header / greeting + quick public-link actions */}
-          <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
-            <div>
-              <h1 className="text-3xl font-bold mb-1">
-                Welcome{displayName ? `, ${displayName}` : ""} 👋
-              </h1>
-              <p className="text-sm text-slate-400">
-                Manage your portfolio content, themes, and messages from one place.
-              </p>
+      <div className="flex">
+        {/* SIDEBAR WRAPPER (desktop static, mobile slide-in) */}
+        <div
+          className={`fixed md:static inset-y-0 left-0 z-50 transform transition-transform duration-300
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
+        >
+          <div className="h-full">
+            {/* Close button for mobile */}
+            <div className="md:hidden bg-slate-900 flex items-center justify-between px-4 py-3 border-b border-slate-800">
+              <span className="font-semibold">Menu</span>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="text-xl"
+                aria-label="Close menu"
+              >
+                ✕
+              </button>
             </div>
 
-            {publicUrl && (
-              <div className="flex flex-col items-end gap-1 text-right">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-400">
-                    Public portfolio
-                  </span>
-                  <span
-                    className={`text-[11px] px-2 py-0.5 rounded-full border ${
-                      isPublic
-                        ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/40"
-                        : "bg-slate-800 text-slate-300 border-slate-600"
-                    }`}
-                  >
-                    {isPublic ? "Live" : "Private"}
-                  </span>
-                </div>
+            <Sidebar
+              active={active}
+              setActive={handleSetActive}
+              unreadCount={unreadCount}
+            />
+          </div>
+        </div>
 
-                <div className="flex flex-wrap gap-2 mt-1">
-                  <a
-                    href={isPublic ? publicUrl : undefined}
-                    target={isPublic ? "_blank" : undefined}
-                    rel={isPublic ? "noreferrer" : undefined}
-                    onClick={(e) => {
-                      if (!isPublic) e.preventDefault();
-                    }}
-                    className={`px-3 py-1.5 text-xs rounded font-medium ${
-                      isPublic
-                        ? "bg-indigo-600 hover:bg-indigo-500 text-white"
-                        : "bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700"
-                    }`}
-                  >
-                    {isPublic ? "View Public Profile" : "Not public yet"}
-                  </a>
+        {/* OVERLAY when sidebar open on mobile */}
+        {sidebarOpen && (
+          <div
+            onClick={() => setSidebarOpen(false)}
+            className="fixed inset-0 bg-black/50 md:hidden z-40"
+          ></div>
+        )}
 
-                  <button
-                    type="button"
-                    onClick={handleCopyLink}
-                    className="px-3 py-1.5 text-xs rounded border border-slate-600 text-slate-200 hover:bg-slate-800"
-                  >
-                    Copy Link
-                  </button>
-                </div>
-
-                {copyStatus && (
-                  <span className="text-[11px] text-emerald-300 mt-0.5">
-                    {copyStatus}
-                  </span>
-                )}
+        {/* MAIN CONTENT */}
+        <main className="flex-1 p-4 md:p-8 mt-2 md:mt-0">
+          <div className="max-w-full md:max-w-5xl mx-auto">
+            {/* Top header / greeting + quick public-link actions */}
+            <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold mb-1">
+                  Welcome{displayName ? `, ${displayName}` : ""} 👋
+                </h1>
+                <p className="text-xs md:text-sm text-slate-400">
+                  Manage your portfolio content, themes, and messages from one place.
+                </p>
               </div>
+
+              {publicUrl && (
+                <div className="flex flex-col items-end gap-1 text-right w-full sm:w-auto">
+                  <div className="flex items-center gap-2 justify-end">
+                    <span className="text-xs text-slate-400">
+                      Public portfolio
+                    </span>
+                    <span
+                      className={`text-[11px] px-2 py-0.5 rounded-full border ${
+                        isPublic
+                          ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/40"
+                          : "bg-slate-800 text-slate-300 border-slate-600"
+                      }`}
+                    >
+                      {isPublic ? "Live" : "Private"}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 mt-1 justify-end">
+                    <a
+                      href={isPublic ? publicUrl : undefined}
+                      target={isPublic ? "_blank" : undefined}
+                      rel={isPublic ? "noreferrer" : undefined}
+                      onClick={(e) => {
+                        if (!isPublic) e.preventDefault();
+                      }}
+                      className={`px-3 py-1.5 text-xs rounded font-medium ${
+                        isPublic
+                          ? "bg-indigo-600 hover:bg-indigo-500 text-white"
+                          : "bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700"
+                      }`}
+                    >
+                      {isPublic ? "View Public Profile" : "Not public yet"}
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={handleCopyLink}
+                      className="px-3 py-1.5 text-xs rounded border border-slate-600 text-slate-200 hover:bg-slate-800"
+                    >
+                      Copy Link
+                    </button>
+                  </div>
+
+                  {copyStatus && (
+                    <span className="text-[11px] text-emerald-300 mt-0.5">
+                      {copyStatus}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Panels */}
+            {active === "profile" && (
+              <ProfileEditor
+                profile={profile}
+                loading={profileLoading}
+                error={profileError}
+                refresh={fetchProfile}
+              />
+            )}
+
+            {active === "skills" && <SkillsEditor />}
+            {active === "projects" && <ProjectsEditor />}
+            {active === "experience" && <ExperienceEditor />}
+            {active === "certifications" && <CertificationsEditor />}
+            {active === "themes" && <ThemeSelector />}
+            {active === "whyhireme" && <WhyHireMeEditor />}
+
+            {/* Public portfolio settings page (more detailed controls) */}
+            {active === "public" && <PublicViewControls />}
+
+            {active === "messages" && (
+              <MessagesPanel
+                onUnreadChange={setUnreadCount}
+              />
             )}
           </div>
-
-          {/* Panels */}
-          {active === "profile" && (
-            <ProfileEditor
-              profile={profile}
-              loading={profileLoading}
-              error={profileError}
-              refresh={fetchProfile}
-            />
-          )}
-
-          {active === "skills" && <SkillsEditor />}
-          {active === "projects" && <ProjectsEditor />}
-          {active === "experience" && <ExperienceEditor />}
-          {active === "certifications" && <CertificationsEditor />}
-          {active === "themes" && <ThemeSelector />}
-
-          {/* Public portfolio settings page (more detailed controls) */}
-          {active === "public" && <PublicViewControls />}
-
-          {active === "messages" && (
-            <MessagesPanel
-              onUnreadChange={setUnreadCount} // 👈 Messages will call this
-            />
-          )}
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

@@ -1,14 +1,9 @@
 // src/pages/PublicProfile.jsx
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import {
-  getPublicProfile,
-  getPublicSkills,
-  getPublicProjects,
-  getPublicExperience,
-  getPublicCertifications,
-  getPublicWhyHireMe,
-} from "../api";
+import axios from "axios";
+
+import { getPublicProfile } from "../api";
 
 import Hero from "../components/Hero";
 import Skills from "../components/Skills";
@@ -37,19 +32,19 @@ export default function PublicProfile() {
   useEffect(() => {
     async function load() {
       try {
-        const p = await getPublicProfile(username);
-        const sk = await getPublicSkills(username);
-        const ex = await getPublicExperience(username);
-        const pr = await getPublicProjects(username);
-        const ce = await getPublicCertifications(username);
-        const wh = await getPublicWhyHireMe(username);
+        // Public profile page should NEVER send Authorization header.
+        delete axios.defaults.headers.common["Authorization"];
 
-        setProfile(p.data || p);
-        setSkills(sk.data || sk);
-        setExperience(ex.data || ex);
-        setProjects(pr.data || pr);
-        setCertifications(ce.data || ce);
-        setWhyHireMe(wh.data || wh);
+        // Load full nested profile for this username
+        const res = await getPublicProfile(username);
+        const data = res.data || res;
+
+        setProfile(data);
+        setSkills(data.skills || []);
+        setExperience(data.experiences || []);
+        setProjects(data.projects || []);
+        setCertifications(data.certifications || []);
+        setWhyHireMe(data.whyhiremes || []);
       } catch (e) {
         console.error(e);
         setError("Profile not found or private");
@@ -57,6 +52,7 @@ export default function PublicProfile() {
         setLoading(false);
       }
     }
+
     load();
   }, [username]);
 
@@ -81,7 +77,6 @@ export default function PublicProfile() {
       <Navbar />
 
       <main className="mx-auto max-w-6xl px-4 pb-16 pt-24 sm:px-6 lg:px-8">
-        {/* Use Hero with username override */}
         <Hero username={username} />
 
         <section id="whyhireme" className="mt-16 scroll-mt-24">
@@ -89,19 +84,19 @@ export default function PublicProfile() {
         </section>
 
         <section id="skills" className="mt-16 scroll-mt-24">
-          <Skills skills={skills} isPublic />
+          <Skills items={skills} isPublic />
         </section>
 
         <section id="experience" className="mt-16 scroll-mt-24">
-          <Experience experience={experience} />
+          <Experience items={experience} />
         </section>
 
         <section id="projects" className="mt-16 scroll-mt-24">
-          <Projects projects={projects} />
+          <Projects items={projects} />
         </section>
 
         <section id="certifications" className="mt-16 scroll-mt-24">
-          <Certifications certifications={certifications} />
+          <Certifications items={certifications} />
         </section>
 
         <section id="contact" className="mt-16 scroll-mt-24">

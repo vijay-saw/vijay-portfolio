@@ -75,25 +75,25 @@ const Navbar = () => {
     user.username === viewingUsername;
 
   return (
-    <header className="fixed inset-x-0 top-0 z-30 border-b border-slate-800/60 bg-slate-950/80 dark:bg-slate-100/80 backdrop-blur">
+    <header className="fixed inset-x-0 top-0 z-30 border-b border-slate-800/60 bg-slate-950/90 backdrop-blur">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         {/* Logo */}
         <div className="flex items-center gap-4">
           <button
             onClick={() => handleScroll("home")}
-            className="text-sm font-semibold tracking-widest text-slate-200 dark:text-slate-800 hover:text-indigo-400 transition"
+            className="text-sm font-semibold tracking-widest text-slate-200 hover:text-indigo-400 transition"
           >
             VIJAY<span className="text-indigo-400">.DEV</span>
           </button>
         </div>
 
         {/* Desktop menu */}
-        <ul className="hidden gap-6 text-sm text-slate-300 dark:text-slate-700 sm:flex">
+        <ul className="hidden gap-6 text-sm text-slate-300 sm:flex">
           {navItems.map((item) => (
             <li key={item.id}>
               <button
                 onClick={() => handleScroll(item.id)}
-                className="transition-colors hover:text-indigo-400 dark:hover:text-indigo-600"
+                className="transition-colors hover:text-indigo-400"
               >
                 {item.label}
               </button>
@@ -103,16 +103,16 @@ const Navbar = () => {
 
         {/* Right side controls */}
         <div className="flex items-center gap-3">
-          {/* Theme toggle button */}
+          {/* Theme toggle button (still controls rest of site) */}
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-full border border-slate-700 dark:border-slate-400 hover:border-indigo-500 transition"
+            className="p-2 rounded-full border border-slate-700 hover:border-indigo-500 transition"
             aria-label="Toggle theme"
           >
             {theme === "dark" ? (
               <Sun className="h-5 w-5 text-yellow-300" />
             ) : (
-              <Moon className="h-5 w-5 text-slate-700" />
+              <Moon className="h-5 w-5 text-slate-200" />
             )}
           </button>
 
@@ -176,17 +176,15 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* ----------------------------
-          Mobile Slide-down Menu
-         ---------------------------- */}
+      {/* Mobile Slide-down Menu */}
       {mobileOpen && (
-        <div className="sm:hidden bg-slate-900/95 dark:bg-slate-100/95 border-b border-slate-800/60 backdrop-blur-md px-4 pb-4 pt-2">
-          <ul className="flex flex-col gap-3 text-slate-300 dark:text-slate-700 text-sm">
+        <div className="sm:hidden bg-slate-900/95 border-b border-slate-800/60 backdrop-blur-md px-4 pb-4 pt-2">
+          <ul className="flex flex-col gap-3 text-slate-300 text-sm">
             {navItems.map((item) => (
               <li key={item.id}>
                 <button
                   onClick={() => handleScroll(item.id)}
-                  className="block w-full text-left py-2 px-2 rounded hover:bg-slate-800/50 dark:hover:bg-slate-200/50 transition"
+                  className="block w-full text-left py-2 px-2 rounded hover:bg-slate-800/50 transition"
                 >
                   {item.label}
                 </button>

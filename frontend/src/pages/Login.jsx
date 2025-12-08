@@ -14,38 +14,49 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [serverMessage, setServerMessage] = useState(null);
 
-  // NOTE: default redirect changed to "/home" (user's personal portfolio)
+  // Default redirect after login
   const redirectTo = (location.state && location.state.from) || "/dashboard";
+
+  const handleCancel = () => {
+    navigate(-1); // go back to previous page
+  };
 
   const validate = () => {
     const e = {};
-    if (!form.usernameOrEmail.trim()) e.usernameOrEmail = "Username or email is required";
-    if (!form.password.trim()) e.password = "Password is required";
+    if (!form.usernameOrEmail.trim()) {
+      e.usernameOrEmail = "Username or email is required";
+    }
+    if (!form.password.trim()) {
+      e.password = "Password is required";
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   const handleChange = (e) => {
-    setForm((s) => ({ ...s, [e.target.name]: e.target.value }));
-    setErrors((s) => ({ ...s, [e.target.name]: "" }));
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
     setServerMessage(null);
   };
 
   const handleSubmit = async (evt) => {
     evt?.preventDefault?.();
     if (!validate()) return;
+
     setLoading(true);
     setServerMessage(null);
 
     try {
       const payload = {
-        username: form.usernameOrEmail,
+        username: form.usernameOrEmail.trim(),
         password: form.password,
-        email: form.usernameOrEmail,
+        email: form.usernameOrEmail.trim(),
       };
 
       const res = await apiLogin(payload);
-      // Attempt to get user/profile either from login response or from getMe()
+
+      // Try to get user info from response or fallback to getMe()
       let user = null;
       if (res && (res.user || res.username || res.email)) {
         user = res.user || { username: res.username, email: res.email, ...res };
@@ -64,17 +75,15 @@ export default function Login() {
         return;
       }
 
-      // Tell AuthProvider about token and user
+      // Set auth in context
       loginWithToken(accessToken, user || null);
 
-      // Use React Router navigation. If for some reason that doesn't change route,
-      // fallback to a hard redirect so user definitely leaves the login page.
+      // Try React Router navigation first
       navigate(redirectTo, { replace: true });
 
-      // Fallback after a tick if React Router didn't change the route (rare)
+      // Fallback in rare case route doesn't change
       setTimeout(() => {
         if (window.location.pathname === "/login" || window.location.pathname === "/") {
-          // if still on login, force a full navigation
           window.location.href = redirectTo;
         }
       }, 300);
@@ -83,18 +92,17 @@ export default function Login() {
       const serverResp = err?.response;
 
       if (serverResp) {
-        const status = serverResp.status;
-        const data = serverResp.data;
+        const { status, data } = serverResp;
 
         if (status === 400 || status === 401) {
           if (data?.detail) {
             setServerMessage(data.detail);
-          } else if (typeof data === "object") {
+          } else if (typeof data === "object" && data !== null) {
             const fieldErrors = {};
-            for (const k of Object.keys(data)) {
-              const v = data[k];
-              fieldErrors[k === "non_field_errors" ? "general" : k] =
-                Array.isArray(v) ? v.join(", ") : String(v);
+            for (const key of Object.keys(data)) {
+              const value = data[key];
+              fieldErrors[key === "non_field_errors" ? "general" : key] =
+                Array.isArray(value) ? value.join(", ") : String(value);
             }
             setErrors(fieldErrors);
             setServerMessage("Please fix the highlighted fields.");
@@ -112,53 +120,102 @@ export default function Login() {
     }
   };
 
+  const inputBase =
+    "mt-1 block w-full rounded border border-slate-600 px-3 py-2 bg-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500";
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white p-6">
-      <form onSubmit={handleSubmit} className="max-w-md w-full bg-slate-800 p-6 rounded-lg shadow-lg">
-        <h1 className="text-2xl font-bold mb-4">Login</h1>
-
-        {serverMessage && <div className="mb-3 p-3 bg-slate-900 text-sm text-amber-300 rounded">{serverMessage}</div>}
-
-        <label className="block mb-3">
-          <span className="text-sm text-slate-300">Username or Email</span>
-          <input
-            name="usernameOrEmail"
-            value={form.usernameOrEmail}
-            onChange={handleChange}
-            className="mt-1 block w-full rounded border border-slate-600 px-3 py-2 bg-slate-700"
-            autoComplete="username"
-          />
-          {errors.usernameOrEmail && <div className="text-red-400 text-sm">{errors.usernameOrEmail}</div>}
-          {errors.username && <div className="text-red-400 text-sm">{errors.username}</div>}
-          {errors.email && <div className="text-red-400 text-sm">{errors.email}</div>}
-        </label>
-
-        <label className="block mb-4">
-          <span className="text-sm text-slate-300">Password</span>
-          <input
-            type="password"
-            name="password"
-            value={form.password}
-            onChange={handleChange}
-            className="mt-1 block w-full rounded border border-slate-600 px-3 py-2 bg-slate-700"
-            autoComplete="current-password"
-          />
-          {errors.password && <div className="text-red-400 text-sm">{errors.password}</div>}
-        </label>
-
-        <button type="submit" disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded mb-3">
-          {loading ? "Signing in..." : "Sign in"}
+      <div className="relative max-w-md w-full">
+        {/* ❌ Cancel / Close button */}
+        <button
+          type="button"
+          onClick={handleCancel}
+          className="absolute -top-3 -right-3 bg-slate-800 border border-slate-600 rounded-full
+                     w-9 h-9 flex items-center justify-center text-slate-300 text-xl 
+                     hover:bg-slate-700 transition"
+          aria-label="Go back"
+        >
+          ✕
         </button>
 
-        <div className="flex justify-between items-center">
-          <button type="button" onClick={() => navigate("/register")} className="text-sm text-slate-300 underline">
-            Create account
+        <form
+          onSubmit={handleSubmit}
+          className="w-full bg-slate-800 p-6 rounded-lg shadow-lg"
+          noValidate
+        >
+          <h1 className="text-2xl font-bold mb-4 text-center">Login</h1>
+
+          {serverMessage && (
+            <div className="mb-3 p-3 bg-slate-900 text-xs text-amber-300 rounded">
+              {serverMessage}
+            </div>
+          )}
+
+          <label className="block mb-3">
+            <span className="text-sm text-slate-300">Username or Email</span>
+            <input
+              name="usernameOrEmail"
+              value={form.usernameOrEmail}
+              onChange={handleChange}
+              className={inputBase}
+              autoComplete="username"
+            />
+            {errors.usernameOrEmail && (
+              <div className="text-red-400 text-xs mt-1">
+                {errors.usernameOrEmail}
+              </div>
+            )}
+            {errors.username && (
+              <div className="text-red-400 text-xs mt-1">{errors.username}</div>
+            )}
+            {errors.email && (
+              <div className="text-red-400 text-xs mt-1">{errors.email}</div>
+            )}
+          </label>
+
+          <label className="block mb-4">
+            <span className="text-sm text-slate-300">Password</span>
+            <input
+              type="password"
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              className={inputBase}
+              autoComplete="current-password"
+            />
+            {errors.password && (
+              <div className="text-red-400 text-xs mt-1">{errors.password}</div>
+            )}
+          </label>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed
+                       text-white px-4 py-2 rounded mb-3 text-sm font-medium transition"
+            aria-busy={loading}
+          >
+            {loading ? "Signing in..." : "Sign in"}
           </button>
-          <button type="button" onClick={() => navigate("/forgot-password")} className="text-sm text-slate-300 underline">
-            Forgot?
-          </button>
-        </div>
-      </form>
+
+          <div className="flex justify-between items-center text-sm">
+            <button
+              type="button"
+              onClick={() => navigate("/register")}
+              className="text-slate-300 underline hover:text-white transition"
+            >
+              Create account
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/forgot-password")}
+              className="text-slate-300 underline hover:text-white transition"
+            >
+              Forgot?
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

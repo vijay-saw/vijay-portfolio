@@ -6,6 +6,16 @@ import "aos/dist/aos.css";
 import { getProjects, getPublicProjects } from "../api";
 
 /**
+ * Normalize any incoming data to an array
+ */
+const toArray = (data) => {
+  if (Array.isArray(data)) return data;
+  // handle DRF pagination style: { results: [...] }
+  if (data && Array.isArray(data.results)) return data.results;
+  return [];
+};
+
+/**
  * Projects
  * - items prop → render directly (public profile)
  * - else:
@@ -13,14 +23,14 @@ import { getProjects, getPublicProjects } from "../api";
  *    - isPublic = false → logged-in user's projects
  */
 const Projects = ({ isPublic = true, items }) => {
-  const [projects, setProjects] = useState(items || []);
+  const [projects, setProjects] = useState(toArray(items));
   const [error, setError] = useState(null);
 
   useEffect(() => {
     AOS.init({ duration: 700, easing: "ease-out-cubic" });
 
     if (items !== undefined && items !== null) {
-      setProjects(items || []);
+      setProjects(toArray(items));
       AOS.refresh();
       return;
     }
@@ -30,19 +40,25 @@ const Projects = ({ isPublic = true, items }) => {
     if (isPublic) {
       getPublicProjects()
         .then((res) => {
-          setProjects(res.data || []);
+          setProjects(toArray(res?.data));
           AOS.refresh();
         })
-        .catch(() => setError("Unable to load projects."));
+        .catch(() => {
+          setError("Unable to load projects.");
+          setProjects([]); // keep array type
+        });
       return;
     }
 
     getProjects()
       .then((res) => {
-        setProjects(res.data || []);
+        setProjects(toArray(res?.data));
         AOS.refresh();
       })
-      .catch(() => setError("Unable to load projects."));
+      .catch(() => {
+        setError("Unable to load projects.");
+        setProjects([]); // keep array type
+      });
   }, [isPublic, items]);
 
   if (error) {
@@ -56,7 +72,8 @@ const Projects = ({ isPublic = true, items }) => {
     );
   }
 
-  if (!projects.length) return null;
+  const safeProjects = Array.isArray(projects) ? projects : [];
+  if (!safeProjects.length) return null;
 
   return (
     <section id="projects" className="py-16 px-6">
@@ -64,7 +81,7 @@ const Projects = ({ isPublic = true, items }) => {
         Projects
       </h2>
       <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-        {projects.map((p, index) => (
+        {safeProjects.map((p, index) => (
           <div
             key={p.id || index}
             data-aos="fade-up"

@@ -6,6 +6,16 @@ import "aos/dist/aos.css";
 import { getExperience, getPublicExperience } from "../api";
 
 /**
+ * Normalize any incoming data to an array
+ */
+const toArray = (data) => {
+  if (Array.isArray(data)) return data;
+  // handle DRF pagination style: { results: [...] }
+  if (data && Array.isArray(data.results)) return data.results;
+  return [];
+};
+
+/**
  * Experience
  * - items prop → render directly (public profile)
  * - otherwise:
@@ -13,14 +23,14 @@ import { getExperience, getPublicExperience } from "../api";
  *   - isPublic = false → logged-in user's experience
  */
 const Experience = ({ isPublic = true, items }) => {
-  const [experience, setExperience] = useState(items || []);
+  const [experience, setExperience] = useState(toArray(items));
   const [error, setError] = useState(null);
 
   useEffect(() => {
     AOS.init({ duration: 700, easing: "ease-out-cubic" });
 
     if (items !== undefined && items !== null) {
-      setExperience(items || []);
+      setExperience(toArray(items));
       AOS.refresh();
       return;
     }
@@ -30,19 +40,25 @@ const Experience = ({ isPublic = true, items }) => {
     if (isPublic) {
       getPublicExperience()
         .then((res) => {
-          setExperience(res.data || []);
+          setExperience(toArray(res?.data));
           AOS.refresh();
         })
-        .catch(() => setError("Unable to load experience."));
+        .catch(() => {
+          setError("Unable to load experience.");
+          setExperience([]); // keep as array on error
+        });
       return;
     }
 
     getExperience()
       .then((res) => {
-        setExperience(res.data || []);
+        setExperience(toArray(res?.data));
         AOS.refresh();
       })
-      .catch(() => setError("Unable to load experience."));
+      .catch(() => {
+        setError("Unable to load experience.");
+        setExperience([]); // keep as array on error
+      });
   }, [isPublic, items]);
 
   if (error) {
@@ -56,7 +72,8 @@ const Experience = ({ isPublic = true, items }) => {
     );
   }
 
-  if (!experience.length) return null;
+  const safeExperience = Array.isArray(experience) ? experience : [];
+  if (!safeExperience.length) return null;
 
   return (
     <section id="experience" className="py-16 px-6">
@@ -64,7 +81,7 @@ const Experience = ({ isPublic = true, items }) => {
         Experience
       </h2>
       <div className="space-y-6 max-w-6xl mx-auto">
-        {experience.map((exp, index) => (
+        {safeExperience.map((exp, index) => (
           <div
             key={exp.id || index}
             data-aos="fade-up"

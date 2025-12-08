@@ -5,6 +5,7 @@ from rest_framework.decorators import api_view, permission_classes, action
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.conf import settings
+from django.contrib.auth import get_user_model  # ✅ NEW
 
 from rest_framework.permissions import AllowAny
 import requests
@@ -162,9 +163,6 @@ class PublicProfileViewSet(viewsets.ReadOnlyModelViewSet):
 # ---------------------------
 # Contact messages
 # ---------------------------
-# ---------------------------
-# Contact messages
-# ---------------------------
 class ContactMessageViewSet(viewsets.ModelViewSet):
     queryset = ContactMessage.objects.all().order_by("-created_at")
     serializer_class = ContactMessageSerializer
@@ -209,6 +207,35 @@ class ContactMessageViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+# ✅ Helper to always get/create default owner (Vijay) profile
+def get_default_owner_profile():
+    """
+    Always return the default owner's Profile (Vijay by default).
+
+    - Uses settings.DEFAULT_OWNER_USERNAME if set, otherwise 'vijay'
+    - If the User doesn't exist, create it.
+    - If the Profile doesn't exist, create it.
+    """
+    username = getattr(settings, "DEFAULT_OWNER_USERNAME", None) or "vijay"
+
+    User = get_user_model()
+    user, _ = User.objects.get_or_create(
+        username=username,
+        defaults={"email": ""}
+    )
+
+    profile = Profile.objects.filter(user=user).first()
+    if not profile:
+        profile = Profile.objects.create(
+            user=user,
+            name=user.get_full_name() or user.username,
+            email=user.email or "",
+            public=True,
+        )
+
+    return profile
+
+
 # ---------------------------
 # Site owner public profile (default homepage data)
 # ---------------------------
@@ -231,6 +258,8 @@ def site_owner_profile(request):
     profile = get_object_or_404(Profile, user__username=username)
     serializer = ProfileSerializer(profile, context={"request": request})
     return Response(serializer.data)
+
+
 @api_view(["GET"])
 @permission_classes([permissions.AllowAny])
 def site_owner_whyhireme(request):
@@ -248,23 +277,20 @@ def site_owner_whyhireme(request):
     return Response(serializer.data)
 
 
-
 @api_view(["GET"])
 @permission_classes([permissions.AllowAny])
 def site_owner_skills(request):
     """
-    Public endpoint: returns Skills for the site owner only.
-    """
-    username = getattr(settings, "DEFAULT_OWNER_USERNAME", None)
-    if not username:
-        return Response({"detail": "DEFAULT_OWNER_USERNAME missing"}, status=500)
+    Public endpoint: returns Skills for the site owner (Vijay by default).
 
-    profile = get_object_or_404(Profile, user__username=username)
+    - Auto-creates the owner user+profile if missing.
+    - Never returns 404; always returns an array (possibly empty).
+    """
+    profile = get_default_owner_profile()
     items = profile.skills.all().order_by("order")
 
     serializer = SkillSerializer(items, many=True)
     return Response(serializer.data)
-
 
 
 @api_view(["GET"])
@@ -282,7 +308,6 @@ def site_owner_experience(request):
 
     serializer = ExperienceSerializer(items, many=True)
     return Response(serializer.data)
-
 
 
 @api_view(["GET"])
@@ -331,9 +356,6 @@ def site_owner_ai(request):
 
     serializer = AIProfileSerializer(ai)
     return Response(serializer.data)
-
-
-
 
 
 @api_view(["POST"])

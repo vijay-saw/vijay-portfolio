@@ -6,6 +6,16 @@ import "aos/dist/aos.css";
 import { getSkills, getPublicSkills } from "../api";
 
 /**
+ * Normalize any incoming data to an array
+ */
+const toArray = (data) => {
+  if (Array.isArray(data)) return data;
+  // handle DRF pagination style: { results: [...] }
+  if (data && Array.isArray(data.results)) return data.results;
+  return [];
+};
+
+/**
  * Skills component
  *
  * - If `items` prop is provided → uses that list directly (no API call).
@@ -14,7 +24,7 @@ import { getSkills, getPublicSkills } from "../api";
  *    - isPublic = false → uses getSkills()        (logged-in dashboard)
  */
 const Skills = ({ isPublic = true, items }) => {
-  const [skills, setSkills] = useState(items || []);
+  const [skills, setSkills] = useState(toArray(items));
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -23,7 +33,7 @@ const Skills = ({ isPublic = true, items }) => {
     // If parent passed skills explicitly (public profile),
     // just use them and skip API calls.
     if (items !== undefined && items !== null) {
-      setSkills(items || []);
+      setSkills(toArray(items));
       AOS.refresh();
       return;
     }
@@ -34,17 +44,20 @@ const Skills = ({ isPublic = true, items }) => {
     if (isPublic) {
       getPublicSkills()
         .then((res) => {
-          setSkills(res.data || []);
+          setSkills(toArray(res?.data));
           AOS.refresh();
         })
-        .catch(() => setError("Unable to load skills."));
+        .catch(() => {
+          setError("Unable to load skills.");
+          setSkills([]); // keep as array on error
+        });
       return;
     }
 
     // PRIVATE MODE (dashboard)
     getSkills()
       .then((res) => {
-        setSkills(res.data || []);
+        setSkills(toArray(res?.data));
         AOS.refresh();
       })
       .catch((err) => {
@@ -53,11 +66,15 @@ const Skills = ({ isPublic = true, items }) => {
         } else {
           setError("Unable to load skills right now.");
         }
+        setSkills([]); // keep as array on error
       });
   }, [isPublic, items]);
 
+  // Always work with a safe array to avoid .reduce/.map errors
+  const safeSkills = Array.isArray(skills) ? skills : [];
+
   // Group by category
-  const grouped = skills.reduce((acc, skill) => {
+  const grouped = safeSkills.reduce((acc, skill) => {
     const cat = skill.category || "other";
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(skill.name);

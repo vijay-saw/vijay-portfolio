@@ -4,8 +4,22 @@ import axios from "axios";
 /* -------------------------------------------------------
    BASE URL NORMALIZATION
 ------------------------------------------------------- */
-const rawBase = import.meta.env.VITE_API_URL || "/api";
+
+// Default to Django backend on port 8000 if env is not set
+const DEFAULT_API_BASE = "http://74.225.2.37:8000/api";
+
+// Prefer VITE_API_URL if provided, otherwise fall back
+const rawBase = import.meta.env.VITE_API_URL || DEFAULT_API_BASE;
+
+// Remove trailing slashes
 export const API_BASE = String(rawBase).replace(/\/+$/, "");
+
+console.log("DEBUG API_BASE =", API_BASE);
+
+// Set axios default base URL (used for axios.get/post when path is relative)
+axios.defaults.baseURL = API_BASE;
+
+/* ------------------- PUBLIC (SITE) APIS ------------------- */
 export const getPublicWhyHireMe = () => axios.get(`${API_BASE}/site-whyhireme/`);
 export const getPublicSkills = () => axios.get(`${API_BASE}/site-skills/`);
 export const getPublicExperience = () =>
@@ -14,8 +28,8 @@ export const getPublicProjects = () =>
   axios.get(`${API_BASE}/site-projects/`);
 export const getPublicCertifications = () =>
   axios.get(`${API_BASE}/site-certifications/`);
-
-axios.defaults.baseURL = API_BASE;
+export const updateWhyHireMe = (payload) =>
+  axios.put(`${API_BASE}/whyhireme/`, payload);
 
 /* -------------------------------------------------------
    AUTH HEADERS
@@ -162,22 +176,21 @@ export const getProfile = () => {
     .get(`${API_BASE}/profile/`)
     .then((res) => res)
     .catch((err) => {
-      console.warn("getProfile network failed, using localStorage fallback.", err?.message || err);
+      console.warn(
+        "getProfile network failed, using localStorage fallback.",
+        err?.message || err
+      );
       const data = JSON.parse(localStorage.getItem("local_profile") || "{}");
       return { data };
     });
 };
 
-// ---- updateProfile: single-endpoint PATCH /profile/
-// ---- updateProfile: supports JSON or FormData (for file upload)
 export const updateProfile = async (payload) => {
   try {
     const config = {};
 
-    // If payload is FormData, let axios send multipart/form-data
     if (payload instanceof FormData) {
       config.headers = {
-        // axios will add proper boundary
         "Content-Type": "multipart/form-data",
       };
     }
@@ -195,7 +208,6 @@ export const updateProfile = async (payload) => {
       err?.response?.status,
       err?.response?.data || err?.message || err
     );
-    // optional: cache whatever was sent (for text-only scenarios)
     if (!(payload instanceof FormData)) {
       try {
         localStorage.setItem("local_profile", JSON.stringify(payload));
@@ -211,7 +223,8 @@ export const updateProfile = async (payload) => {
 export const getSkills = () => axios.get(`${API_BASE}/skills/`);
 export const getProjects = () => axios.get(`${API_BASE}/projects/`);
 export const getExperience = () => axios.get(`${API_BASE}/experience/`);
-export const getCertifications = () => axios.get(`${API_BASE}/certifications/`);
+export const getCertifications = () =>
+  axios.get(`${API_BASE}/certifications/`);
 export const getWhyHireMe = () => axios.get(`${API_BASE}/whyhireme/`);
 
 /* -------------------------------------------------------
@@ -228,7 +241,8 @@ export const updateSkills = async (payload) => {
         const name = item.name || item.label || item.title || item.value || "";
         const category = item.category || "";
         const level = item.level || "";
-        const order = typeof item.order !== "undefined" ? Number(item.order) : 0;
+        const order =
+          typeof item.order !== "undefined" ? Number(item.order) : 0;
 
         return {
           ...(name ? { name: String(name).trim() } : {}),
@@ -244,39 +258,54 @@ export const updateSkills = async (payload) => {
 
   if (!Array.isArray(sanitized)) {
     console.error("updateSkills: expected array payload", payload);
-    try { localStorage.setItem("local_skills", JSON.stringify(items)); } catch (e) {}
+    try {
+      localStorage.setItem("local_skills", JSON.stringify(items));
+    } catch (e) {}
     return payload;
   }
 
   if (sanitized.length === 0) {
-    console.warn("updateSkills: no valid skill items to send (filtered out empty names).");
-    try { localStorage.setItem("local_skills", JSON.stringify([])); } catch (e) {}
+    console.warn(
+      "updateSkills: no valid skill items to send (filtered out empty names)."
+    );
+    try {
+      localStorage.setItem("local_skills", JSON.stringify([]));
+    } catch (e) {}
     return [];
   }
 
   try {
     const res = await axios.put(`${API_BASE}/skills/`, sanitized);
     try {
-      const list = Array.isArray(res.data) ? res.data : res.data.skills || [];
+      const list = Array.isArray(res.data)
+        ? res.data
+        : res.data.skills || [];
       localStorage.setItem("local_skills", JSON.stringify(list));
     } catch (e) {}
     return res.data;
   } catch (err) {
-    console.warn("updateSkills failed, saving to localStorage fallback.", err?.message || err);
+    console.warn(
+      "updateSkills failed, saving to localStorage fallback.",
+      err?.message || err
+    );
     if (err.response) {
       console.error("Server status:", err.response.status);
-      console.error("Server response data (validation errors):", err.response.data);
+      console.error(
+        "Server response data (validation errors):",
+        err.response.data
+      );
     } else {
       console.error("No server response (network error):", err);
     }
-    try { localStorage.setItem("local_skills", JSON.stringify(sanitized)); } catch (e) {}
+    try {
+      localStorage.setItem("local_skills", JSON.stringify(sanitized));
+    } catch (e) {}
     return payload;
   }
 };
 
 /* -------------------------------------------------------
    PROJECTS
-   (accepts strings or objects; sanitizes to server shape)
 ------------------------------------------------------- */
 export const updateProjects = async (payload) => {
   const items = Array.isArray(payload) ? payload : payload?.projects || [];
@@ -287,10 +316,18 @@ export const updateProjects = async (payload) => {
         return { title: item.trim() };
       }
       if (item && typeof item === "object") {
-        const title = item.title || item.name || item.project_title || item.label || "";
-        const description = item.description || item.desc || item.summary || "";
-        const tech_stack = item.tech_stack || item.techStack || item.technologies || item.tech || "";
-        const github_url = item.github_url || item.github || item.repo || "";
+        const title =
+          item.title || item.name || item.project_title || item.label || "";
+        const description =
+          item.description || item.desc || item.summary || "";
+        const tech_stack =
+          item.tech_stack ||
+          item.techStack ||
+          item.technologies ||
+          item.tech ||
+          "";
+        const github_url =
+          item.github_url || item.github || item.repo || "";
         const url = item.url || item.link || item.project_url || "";
         const date = item.date || item.published || item.year || "";
 
@@ -309,28 +346,33 @@ export const updateProjects = async (payload) => {
 
   if (sanitized.length === 0) {
     console.warn("updateProjects: no valid project items to send.");
-    try { localStorage.setItem("local_projects", JSON.stringify([])); } catch (e) {}
+    try {
+      localStorage.setItem("local_projects", JSON.stringify([]));
+    } catch (e) {}
     return [];
   }
 
   try {
     const res = await axios.put(`${API_BASE}/projects/`, sanitized);
     try {
-      const list = Array.isArray(res.data) ? res.data : res.data.projects || [];
+      const list = Array.isArray(res.data)
+        ? res.data
+        : res.data.projects || [];
       localStorage.setItem("local_projects", JSON.stringify(list));
     } catch (e) {}
     return res.data;
   } catch (err) {
-    console.warn("updateProjects failed, saving to localStorage fallback.", err?.message || err);
-    try { localStorage.setItem("local_projects", JSON.stringify(sanitized)); } catch (e) {}
+    console.warn(
+      "updateProjects failed, saving to localStorage fallback.",
+      err?.message || err
+    );
+    try {
+      localStorage.setItem("local_projects", JSON.stringify(sanitized));
+    } catch (e) {}
     return sanitized;
   }
 };
 
-/* -------------------------------------------------------
-   EXPERIENCE
-------------------------------------------------------- */
-// DEBUG replace: updateExperience
 /* -------------------------------------------------------
    EXPERIENCE
 ------------------------------------------------------- */
@@ -339,17 +381,16 @@ export const updateExperience = async (payload) => {
 
   const tryParseToISO = (val) => {
     if (!val && val !== 0) return "";
-    if (val instanceof Date && !isNaN(val)) return val.toISOString().slice(0, 10);
+    if (val instanceof Date && !isNaN(val))
+      return val.toISOString().slice(0, 10);
 
     const s = String(val || "").trim();
     if (!s) return "";
 
-    // direct ISO or YYYY/MM/DD
     if (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/.test(s)) {
       return s.replace(/\//g, "-").slice(0, 10);
     }
 
-    // YYYYMMDD or DDMMYYYY
     if (/^\d{8}$/.test(s)) {
       const first4 = parseInt(s.slice(0, 4), 10);
       if (first4 >= 1900 && first4 <= 2100) {
@@ -358,7 +399,6 @@ export const updateExperience = async (payload) => {
       return `${s.slice(4, 8)}-${s.slice(2, 4)}-${s.slice(0, 2)}`;
     }
 
-    // YYYYMM or MMYYYY
     if (/^\d{6}$/.test(s)) {
       const first4 = parseInt(s.slice(0, 4), 10);
       if (first4 >= 1900 && first4 <= 2100) {
@@ -367,10 +407,8 @@ export const updateExperience = async (payload) => {
       return `${s.slice(2, 6)}-${s.slice(0, 2)}-01`;
     }
 
-    // just year
     if (/^\d{4}$/.test(s)) return `${s}-01-01`;
 
-    // DD/MM/YYYY etc.
     const dmy = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
     if (dmy) {
       let dd = dmy[1].padStart(2, "0");
@@ -389,7 +427,6 @@ export const updateExperience = async (payload) => {
     return "";
   };
 
-  // normalize input (array or { experience: [...] })
   const items = Array.isArray(payload) ? payload : payload?.experience || [];
 
   const sanitized = items
@@ -407,7 +444,8 @@ export const updateExperience = async (payload) => {
       }
 
       if (item && typeof item === "object") {
-        const role = item.role || item.title || item.position || item.name || "";
+        const role =
+          item.role || item.title || item.position || item.name || "";
         const company =
           item.company || item.employer || item.org || item.organization || "";
 
@@ -416,7 +454,8 @@ export const updateExperience = async (payload) => {
         let end_raw =
           item.end_date || item.to || item.end || item.ended || "";
 
-        const period = item.period || item.date_range || item.dates || item.duration;
+        const period =
+          item.period || item.date_range || item.dates || item.duration;
         if (!start_raw && period) {
           if (typeof period === "string") {
             const parsed = period.split(/\s*[-–—]\s*/);
@@ -503,27 +542,37 @@ export const updateExperience = async (payload) => {
     return sanitized;
   }
 };
+
 /* -------------------------------------------------------
-   CONTACT MESSAGES (owner view in dashboard)
+   CONTACT MESSAGES
 ------------------------------------------------------- */
-export const getMyMessages = () => axios.get(`${API_BASE}/contact-messages/`);
+export const getMyMessages = () =>
+  axios.get(`${API_BASE}/contact-messages/`);
 export const deleteMessage = (id) =>
   axios.delete(`${API_BASE}/contact-messages/${id}/`);
 export function markMessageRead(id) {
   return axios.post(`${API_BASE}/contact-messages/${id}/mark_read/`);
 }
+
 /* -------------------------------------------------------
    CERTIFICATIONS
 ------------------------------------------------------- */
 export const updateCertifications = async (payload) => {
-  const items = Array.isArray(payload) ? payload : payload?.certifications || [];
+  const items = Array.isArray(payload)
+    ? payload
+    : payload?.certifications || [];
 
   const sanitized = items
     .map((item) => {
       if (typeof item === "string") return { title: item.trim() };
       if (item && typeof item === "object") {
         const title = item.title || item.name || item.cert || "";
-        const issuer = item.issuer || item.company || item.organization || item.org || "";
+        const issuer =
+          item.issuer ||
+          item.company ||
+          item.organization ||
+          item.org ||
+          "";
         const date = item.date || item.issued || item.year || "";
         const url = item.url || item.link || item.certificate_url || "";
 
@@ -539,21 +588,41 @@ export const updateCertifications = async (payload) => {
     .filter((x) => x && x.title);
 
   if (sanitized.length === 0) {
-    console.warn("updateCertifications: no valid certifications to send.");
-    try { localStorage.setItem("local_certifications", JSON.stringify([])); } catch (e) {}
+    console.warn(
+      "updateCertifications: no valid certifications to send."
+    );
+    try {
+      localStorage.setItem(
+        "local_certifications",
+        JSON.stringify([])
+      );
+    } catch (e) {}
     return [];
   }
 
   try {
     const res = await axios.put(`${API_BASE}/certifications/`, sanitized);
     try {
-      const list = Array.isArray(res.data) ? res.data : res.data.certifications || [];
-      localStorage.setItem("local_certifications", JSON.stringify(list));
+      const list = Array.isArray(res.data)
+        ? res.data
+        : res.data.certifications || [];
+      localStorage.setItem(
+        "local_certifications",
+        JSON.stringify(list)
+      );
     } catch (e) {}
     return res.data;
   } catch (err) {
-    console.warn("updateCertifications failed, saving to localStorage fallback.", err?.message || err);
-    try { localStorage.setItem("local_certifications", JSON.stringify(sanitized)); } catch (e) {}
+    console.warn(
+      "updateCertifications failed, saving to localStorage fallback.",
+      err?.message || err
+    );
+    try {
+      localStorage.setItem(
+        "local_certifications",
+        JSON.stringify(sanitized)
+      );
+    } catch (e) {}
     return sanitized;
   }
 };
@@ -561,9 +630,6 @@ export const updateCertifications = async (payload) => {
 /* -------------------------------------------------------
    PUBLIC PROFILE
 ------------------------------------------------------- */
-// -------------------------------------------------------
-//   PUBLIC PROFILE BY USERNAME (no fallback to Vijay)
-// -------------------------------------------------------
 export const getPublicProfile = (username) => {
   return axios.get(`${API_BASE}/public-profiles/${username}/`);
 };
@@ -577,15 +643,31 @@ export const updateTheme = async (payload) => {
     try {
       const res = await axios.put(ep, payload);
       try {
-        if (payload.username) localStorage.setItem(`local_theme_${payload.username}`, JSON.stringify(payload.theme));
-        else localStorage.setItem("local_theme", JSON.stringify(payload.theme));
+        if (payload.username)
+          localStorage.setItem(
+            `local_theme_${payload.username}`,
+            JSON.stringify(payload.theme)
+          );
+        else
+          localStorage.setItem(
+            "local_theme",
+            JSON.stringify(payload.theme)
+          );
       } catch (e) {}
       return res.data;
     } catch (err) {}
   }
   try {
-    if (payload.username) localStorage.setItem(`local_theme_${payload.username}`, JSON.stringify(payload.theme));
-    else localStorage.setItem("local_theme", JSON.stringify(payload.theme));
+    if (payload.username)
+      localStorage.setItem(
+        `local_theme_${payload.username}`,
+        JSON.stringify(payload.theme)
+      );
+    else
+      localStorage.setItem(
+        "local_theme",
+        JSON.stringify(payload.theme)
+      );
   } catch (e) {}
   return payload;
 };
@@ -632,15 +714,19 @@ axios.interceptors.response.use(
 
     const isTokenExpired =
       status === 401 &&
-      ((errorData && (errorData.code === 'token_not_valid' || (errorData.code && errorData.code === 'token_not_valid'))) ||
-        (errorData && errorData.detail && errorData.detail.toLowerCase().includes('token')));
+      ((errorData &&
+        (errorData.code === "token_not_valid" ||
+          (errorData.code && errorData.code === "token_not_valid"))) ||
+        (errorData &&
+          errorData.detail &&
+          errorData.detail.toLowerCase().includes("token")));
 
     if (!isTokenExpired) return Promise.reject(error);
 
     if (originalRequest._retry) return Promise.reject(error);
     originalRequest._retry = true;
 
-    const refreshToken = localStorage.getItem('refreshToken');
+    const refreshToken = localStorage.getItem("refreshToken");
     if (!refreshToken) {
       clearAuth();
       return Promise.reject(error);
@@ -651,7 +737,7 @@ axios.interceptors.response.use(
         failedQueue.push({ resolve, reject });
       })
         .then((token) => {
-          originalRequest.headers['Authorization'] = 'Bearer ' + token;
+          originalRequest.headers["Authorization"] = "Bearer " + token;
           return axios(originalRequest);
         })
         .catch((err) => Promise.reject(err));
@@ -664,14 +750,15 @@ axios.interceptors.response.use(
       const newAccess = resp.data?.access || resp.data?.token;
       if (!newAccess) {
         clearAuth();
-        processQueue(new Error('No new access token'), null);
+        processQueue(new Error("No new access token"), null);
         return Promise.reject(error);
       }
 
       const newRefresh = resp.data?.refresh || refreshToken;
       applyToken(newAccess, newRefresh);
       processQueue(null, newAccess);
-      originalRequest.headers['Authorization'] = 'Bearer ' + newAccess;
+      originalRequest.headers["Authorization"] =
+        "Bearer " + newAccess;
       return axios(originalRequest);
     } catch (err) {
       processQueue(err, null);
